@@ -9,7 +9,7 @@ A live, interactive **Walt Disney World** dashboard — ride wait times, an inte
 - **Live wait times** for **both resorts** — Walt Disney World (Magic Kingdom, EPCOT, Hollywood Studios, Animal Kingdom) **and Disneyland** (Disneyland Park, California Adventure) — via the free [queue-times.com](https://queue-times.com) API, no key required.
 - **Interactive park map** (Leaflet + OpenStreetMap/CARTO tiles) with a **WDW ↔ Disneyland toggle**. Click a park to jump to its live waits.
 - **Disney news wire** via **Google News RSS** `site:` feeds for Disney Parks Blog, AllEars, and WDW News Today / WDWNT — clicks route through Google to the original article so **publishers keep their ad revenue** — filterable by source.
-- **Overview** tab with at-a-glance stats: parks open, average wait, shortest & longest standby right now.
+- **Overview** tab — a three-column desktop dashboard: stats (parks open, avg/shortest/longest wait), **resort-aware Weather & Golden Hour** (follows the WDW↔Disneyland toggle), **Park Pulse**, a **7-day Crowd Forecast**, top waits, headlines, a looping **Mini TV Station** (switchable public-domain channels), and a **Getting There** card with **FAA airport status + traffic links**.
 - **💓 Park Pulse** *(original)* — DreamTrax snapshots wait times locally on every refresh, so it can show whether each ride's line is **▲ rising / ▼ falling** and gauge each park's live **crowd momentum** — no paid or historical API needed.
 - **🌤️ Weather & Golden Hour** *(original)* — current resort conditions plus **sunrise/sunset golden-hour windows** for park photographers, via the free, key-less [Open-Meteo](https://open-meteo.com) API.
 - **🎟️ Ticket price trends** — interactive [Chart.js](https://www.chartjs.org) line graph of 1-Day base ticket prices with **7/30/60/90-day** ranges and a **14-day pricing calendar** (Value/Regular/Peak tiers). No free Disney price API exists, so DreamTrax models Disney's published date-based pricing as an *illustrative* series and **self-records each day's value to `localStorage`** so the history becomes real over time (override via `window.DREAMTRAX_TICKETS`).
@@ -31,7 +31,8 @@ Rather than depending on one RSS-to-JSON service (which rate-limits), DreamTrax 
 | News           | Raw RSS/Atom via a fallback chain of free CORS proxies, parsed in-browser |
 | Weather        | [Open-Meteo](https://open-meteo.com) (free, no key) |
 | Encyclopedia   | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) + [Wikimedia Commons](https://commons.wikimedia.org) (CC BY-SA) |
-| Vintage media  | [Internet Archive](https://archive.org) (public domain) |
+| Vintage media  | [Internet Archive](https://archive.org) + public-domain YouTube |
+| Airport status | [FAA ASWS](https://soa.smext.faa.gov) (free, no key) |
 | Radio          | Sorcerer Radio public webcast |
 | Resort TV      | YouTube embed (credit: WDW Today) |
 | Charts         | [Chart.js](https://www.chartjs.org) |

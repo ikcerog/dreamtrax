@@ -418,17 +418,25 @@
   const fmtTime = (iso) => new Date(iso).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
   const addHr = (iso, h) => fmtTime(new Date(new Date(iso).getTime() + h * 3600000).toISOString());
 
+  function activeResort() {
+    const id = state.resortFilter === "all" ? "WDW" : state.resortFilter;
+    return CFG.resorts.find(r => r.id === id) || CFG.resorts[0];
+  }
+
   async function loadWeather() {
     const el = $("#weatherCard");
     if (!el) return;
+    const r = activeResort();
+    el.innerHTML = `<p class="muted loading">Loading ${esc(r.city)}…</p>`;
     try {
-      const res = await fetch(CFG.weather.url());
+      const res = await fetch(CFG.weatherUrl(r));
       const d = await res.json();
       const c = d.current, day = d.daily;
       const [desc, emoji] = WMO[c.weather_code] || ["—","🌡️"];
       const rise = day.sunrise[0], set = day.sunset[0];
       // Golden hour ≈ first hour after sunrise and last hour before sunset.
       el.innerHTML = `
+        <div class="muted" style="margin-bottom:8px">📍 ${esc(r.city)}</div>
         <div class="wx-now">
           <span class="wx-emoji">${emoji}</span>
           <div><div class="wx-temp">${Math.round(c.temperature_2m)}°F</div>
@@ -450,11 +458,95 @@
     }
   }
 
+  /* ---------- Crowd Forecast (heuristic: day-of-week + season) ---------- */
+  function crowdIndex(d, resortId) {
+    const dow = d.getDay(), mo = d.getMonth(), date = d.getDate();
+    let s = 4;
+    if (dow === 6) s += 3; else if (dow === 0 || dow === 5) s += 2;       // weekends
+    else if (dow === 1 || dow === 2) s -= 1;                              // quieter Mon/Tue
+    if (mo === 5 || mo === 6) s += 2;                                     // summer
+    if (mo === 11 && date >= 18) s += 4;                                  // Christmas week
+    if (mo === 2 || mo === 3) s += 2;                                     // spring break
+    if (mo === 8 || mo === 0) s -= 1;                                     // Sep / mid-Jan lulls
+    if (resortId === "DLR" && (dow === 0 || dow === 6)) s += 1;           // DLR locals on weekends
+    return Math.max(1, Math.min(10, s));
+  }
+  function crowdLabel(n) {
+    return n <= 3 ? { t: "Low", c: "var(--good)" }
+         : n <= 5 ? { t: "Moderate", c: "var(--warn)" }
+         : n <= 7 ? { t: "Busy", c: "#fb923c" }
+         : { t: "Packed", c: "var(--bad)" };
+  }
+  function renderCrowdForecast() {
+    const wrap = $("#crowdForecast");
+    if (!wrap) return;
+    const r = activeResort();
+    const rows = [];
+    for (let i = 0; i < 7; i++) {
+      const d = new Date(); d.setDate(d.getDate() + i);
+      const n = crowdIndex(d, r.id), lab = crowdLabel(n);
+      const day = i === 0 ? "Today" : d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      rows.push(`<div class="pulse-row">
+        <span class="pulse-name">${esc(day)}</span>
+        <div class="pulse-bar"><i style="width:${n * 10}%;background:${lab.c}"></i></div>
+        <span class="pulse-meta"><b style="color:${lab.c}">${lab.t}</b> ${n}/10</span></div>`);
+    }
+    wrap.innerHTML = `<div class="muted" style="margin-bottom:8px">📍 ${esc(r.name)} · predicted</div>${rows.join("")}`;
+  }
+
+  /* ---------- Mini TV Station ---------- */
+  function tvSrc(yt) {
+    return `https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&mute=1&loop=1&playlist=${yt}&rel=0`;
+  }
+  function initMiniTv() {
+    const frame = $("#miniTvFrame"), bar = $("#tvChannels");
+    if (!frame || !bar) return;
+    bar.innerHTML = CFG.tvChannels.map((c, i) =>
+      `<button class="pill ${i === 0 ? "active" : ""}" data-yt="${c.yt}">${esc(c.name)}</button>`).join("");
+    bar.addEventListener("click", (e) => {
+      const b = e.target.closest(".pill"); if (!b) return;
+      [...bar.children].forEach(x => x.classList.remove("active")); b.classList.add("active");
+      frame.src = tvSrc(b.dataset.yt);
+    });
+    // Load first channel only when its tab/section is visible to save bandwidth.
+    if (!frame.dataset.init) { frame.src = tvSrc(CFG.tvChannels[0].yt); frame.dataset.init = "1"; }
+  }
+
+  /* ---------- Getting There: FAA airport status + road links ---------- */
+  async function fetchJSONProxied(url) {
+    try { const r = await fetch(url); if (r.ok) return await r.json(); } catch {}
+    for (const px of CFG.corsProxies) {
+      try { const r = await fetch(px(url)); if (!r.ok) continue; return JSON.parse(await r.text()); } catch {}
+    }
+    return null;
+  }
+  async function loadAirport() {
+    const el = $("#airportCard"), links = $("#roadLinks");
+    if (!el) return;
+    const r = activeResort();
+    if (links) links.innerHTML = (r.roads || []).map(rd =>
+      `<a class="chip" href="${rd.url}" target="_blank" rel="noopener">${esc(rd.label)} ↗</a>`).join("");
+    el.innerHTML = `<p class="muted loading">Checking ${esc(r.airportName)}…</p>`;
+    const d = await fetchJSONProxied(CFG.faaStatus(r.airport));
+    if (!d) { el.innerHTML = `<p class="muted">✈️ ${esc(r.airportName)} — live status unavailable. Use the links below.</p>`; return; }
+    const delayed = d.Delay === true || d.Delay === "true";
+    const reason = d.Status?.[0]?.Reason || (delayed ? "Ground delays in effect" : "No major delays");
+    const wx = d.Weather?.Weather?.[0]?.Weather || "";
+    const temp = d.Weather?.Temp?.[0] || "";
+    el.innerHTML = `
+      <div class="airport-row">
+        <span class="wait-badge ${delayed ? "w-high" : "w-low"}">${delayed ? "Delays" : "Normal"}</span>
+        <div><div class="name">✈️ ${esc(d.Name || r.airportName)}</div>
+        <div class="park">${esc(reason)}${wx ? ` · ${esc(wx)}` : ""}${temp ? ` · ${esc(temp)}` : ""}</div></div>
+      </div>`;
+  }
+
   /* ---------- Refresh orchestration ---------- */
   async function refreshAll() {
     const btn = $("#refreshBtn");
     btn.disabled = true; btn.textContent = "↻ Loading…";
-    await Promise.all([loadWaits(), loadNews(), loadWeather()]);
+    await Promise.all([loadWaits(), loadNews(), loadWeather(), loadAirport()]);
+    renderCrowdForecast();
     state.fetchedAt = new Date();
     $("#lastUpdated").textContent = state.fetchedAt.toLocaleString("en-US", { timeZone: "America/New_York" }) + " ET";
     btn.disabled = false; btn.textContent = "↻ Refresh";
@@ -568,10 +660,6 @@
     discoverLoaded = true;
     const D = CFG.discover;
 
-    // Internet Archive — public-domain Steamboat Willie.
-    $("#archiveFrame").src = `https://archive.org/embed/${D.archiveItem}`;
-    $("#archiveLink").href = `https://archive.org/details/${D.archiveItem}`;
-
     // Park Encyclopedia — Wikipedia REST summaries.
     const enc = $("#encyclopedia");
     enc.innerHTML = CFG.parks.map(p =>
@@ -624,6 +712,7 @@
       const b = e.target.closest(".pill"); if (!b) return;
       state.resortFilter = b.dataset.r; draw();
       renderOverviewStats(); renderParkPulse();
+      loadWeather(); renderCrowdForecast(); loadAirport();
     });
   }
 
@@ -652,6 +741,8 @@
   initOverviewResort();
   initVersion();
   initTickets();
+  initMiniTv();
+  renderCrowdForecast();
   (async () => { await resolveParkIds(); refreshAll(); })();
   setInterval(refreshAll, CFG.refreshMs);
 })();

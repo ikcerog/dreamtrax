@@ -71,26 +71,43 @@
         </div>
       </div>
 
-      <div class="grid two">
+      <div class="grid three">
         <div class="card">
-          <div class="card-head"><h3>🌤️ Resort Weather &amp; Golden Hour</h3></div>
+          <div class="card-head"><h3>🌤️ Weather &amp; Golden Hour</h3></div>
           <div id="weatherCard"><p class="muted loading">Loading…</p></div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>💓 Park Pulse</h3><span class="muted">Live crowd momentum</span></div>
+          <div class="card-head"><h3>💓 Park Pulse</h3><span class="muted">Live momentum</span></div>
           <div id="parkPulse"><p class="muted loading">Loading…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>📅 Crowd Forecast</h3><span class="muted">7-day</span></div>
+          <div id="crowdForecast"><p class="muted loading">Loading…</p></div>
         </div>
       </div>
 
-      <div class="grid two">
+      <div class="grid three">
         <div class="card">
-          <div class="card-head"><h3>🎢 Top Wait Times Right Now</h3></div>
+          <div class="card-head"><h3>🎢 Top Wait Times Now</h3></div>
           <div id="overviewWaits" class="list compact"><p class="muted loading">Loading…</p></div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>📰 Latest Disney Headlines</h3></div>
+          <div class="card-head"><h3>📰 Latest Headlines</h3></div>
           <div id="overviewNews" class="list compact"><p class="muted loading">Loading…</p></div>
         </div>
+        <div class="card">
+          <div class="card-head"><h3>📺 Mini TV Station</h3></div>
+          <div class="filters spaced" id="tvChannels"></div>
+          <div class="video-wrap"><iframe id="miniTvFrame" src="" title="DreamTrax Mini TV Station"
+            loading="lazy" frameborder="0"
+            allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-head"><h3>🚗 Getting There</h3><span class="muted">Airport &amp; roads</span></div>
+        <div id="airportCard"><p class="muted loading">Loading…</p></div>
+        <div class="links" id="roadLinks"></div>
       </div>
     </section>
 
@@ -158,12 +175,13 @@
         <div class="card">
           <div class="card-head"><h3>📽️ Vintage Vault</h3>
             <span class="muted">Public domain</span></div>
-          <p class="muted">“Steamboat Willie” (1928) entered the public domain on January 1, 2024. Streamed from the Internet Archive.</p>
+          <p class="muted">“Steamboat Willie” (1928) entered the public domain on January 1, 2024.</p>
           <div class="video-wrap">
-            <iframe id="archiveFrame" src="" title="Steamboat Willie (1928, public domain)"
-              loading="lazy" frameborder="0" allowfullscreen webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+            <iframe src="https://www.youtube-nocookie.com/embed/BBgghnQF6E4?rel=0" title="Steamboat Willie (1928, public domain)"
+              loading="lazy" frameborder="0"
+              allow="accelerometer; encrypted-media; picture-in-picture" allowfullscreen></iframe>
           </div>
-          <p class="credit">Source: <a id="archiveLink" href="#" target="_blank" rel="noopener">Internet Archive</a> · Public domain.</p>
+          <p class="credit">Public domain · Browse more on the <a href="https://archive.org/details/animationandcartoons" target="_blank" rel="noopener">Internet Archive ↗</a></p>
         </div>
         <div class="card">
           <div class="card-head"><h3>📷 Free Photo Stream</h3>

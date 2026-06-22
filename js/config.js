@@ -16,10 +16,22 @@ window.DREAMTRAX = {
     { id: 17, short: "DCA", resort: "DLR", name: "California Adventure", nameMatch: "california adventure", companyMatch: "disneyland resort", lat: 33.8060, lng: -117.9221, color: "#38bdf8" },
   ],
 
-  // Resorts (for map focus + filtering).
+  // Resorts (for map focus, filtering, weather, crowd & airport modules).
   resorts: [
-    { id: "WDW", name: "Walt Disney World", center: [28.385, -81.563], zoom: 12, tz: "America/New_York" },
-    { id: "DLR", name: "Disneyland",        center: [33.809, -117.918], zoom: 14, tz: "America/Los_Angeles" },
+    { id: "WDW", name: "Walt Disney World", center: [28.385, -81.563], zoom: 12,
+      tz: "America/New_York", lat: 28.385, lng: -81.563, city: "Lake Buena Vista, FL",
+      airport: "MCO", airportName: "Orlando Intl (MCO)",
+      roads: [
+        { label: "FL511 Traffic", url: "https://fl511.com/" },
+        { label: "MCO Airport", url: "https://orlandoairports.net/" },
+      ] },
+    { id: "DLR", name: "Disneyland", center: [33.809, -117.918], zoom: 14,
+      tz: "America/Los_Angeles", lat: 33.809, lng: -117.918, city: "Anaheim, CA",
+      airport: "SNA", airportName: "John Wayne / Orange County (SNA)",
+      roads: [
+        { label: "Caltrans QuickMap", url: "https://quickmap.dot.ca.gov/" },
+        { label: "SNA Airport", url: "https://www.ocair.com/" },
+      ] },
   ],
 
   // News sources via Google News RSS `site:` queries. Clicks route through Google
@@ -46,20 +58,26 @@ window.DREAMTRAX = {
 
   queueApi: (parkId) => `https://queue-times.com/parks/${parkId}/queue_times.json`,
 
-  // Open-Meteo — free, no API key. Resort-area coordinates (near Seven Seas Lagoon).
-  weather: {
-    lat: 28.385, lng: -81.563,
-    url(){
-      const p = new URLSearchParams({
-        latitude: this.lat, longitude: this.lng,
-        current: "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day",
-        daily: "sunrise,sunset,precipitation_probability_max,temperature_2m_max,temperature_2m_min,uv_index_max",
-        temperature_unit: "fahrenheit", wind_speed_unit: "mph", precipitation_unit: "inch",
-        timezone: "America/New_York", forecast_days: "1",
-      });
-      return `https://api.open-meteo.com/v1/forecast?${p}`;
-    },
+  // Open-Meteo — free, no API key. Built per-resort so the card follows the toggle.
+  weatherUrl(resort) {
+    const p = new URLSearchParams({
+      latitude: resort.lat, longitude: resort.lng,
+      current: "temperature_2m,apparent_temperature,relative_humidity_2m,precipitation,weather_code,wind_speed_10m,is_day",
+      daily: "sunrise,sunset,precipitation_probability_max,temperature_2m_max,temperature_2m_min,uv_index_max",
+      temperature_unit: "fahrenheit", wind_speed_unit: "mph", precipitation_unit: "inch",
+      timezone: resort.tz, forecast_days: "1",
+    });
+    return `https://api.open-meteo.com/v1/forecast?${p}`;
   },
+
+  // FAA Airport Status (free, no key). Routed via the CORS-proxy chain.
+  faaStatus: (code) => `https://soa.smext.faa.gov/asws/api/airport/status/${code}`,
+
+  // Mini TV Station — public-domain / freely-shared channels (YouTube nocookie).
+  tvChannels: [
+    { name: "Steamboat Willie ’28", yt: "BBgghnQF6E4" }, // Disney official, public domain
+    { name: "Resort TV Info",       yt: "-LqPzc9bYe0" }, // courtesy WDW Today
+  ],
 
   // Ticket pricing. No free/official Disney price API exists, so DreamTrax models
   // Disney's published date-based pricing structure (base + weekend/seasonal tiers)
@@ -101,8 +119,15 @@ window.DREAMTRAX = {
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
 
-  version: "1.4.0",
+  version: "1.5.0",
   patchNotes: [
+    { v: "1.5.0", date: "2026-06-22", notes: [
+      "Weather now follows the resort toggle (Orlando ↔ Anaheim)",
+      "Overview expanded to three columns: + Crowd Forecast, Mini TV Station, Getting There",
+      "Mini TV Station with switchable public-domain channels (fixes Steamboat Willie)",
+      "Getting There card: FAA airport status + traffic links",
+      "Fixed spacing between stacked cards on Discover/other tabs",
+    ]},
     { v: "1.4.0", date: "2026-06-22", notes: [
       "New Discover tab: Park Encyclopedia via Wikipedia + Wikimedia Commons photos",
       "Vintage Vault: public-domain Steamboat Willie (1928) via the Internet Archive",

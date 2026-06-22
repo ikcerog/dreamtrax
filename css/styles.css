@@ -94,6 +94,11 @@ main { padding: 18px clamp(16px, 4vw, 40px) 40px; }
 /* Grid + cards */
 .grid { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); margin-bottom: 16px; }
 .grid.two { grid-template-columns: repeat(auto-fit, minmax(320px, 1fr)); }
+.grid.three { grid-template-columns: repeat(auto-fit, minmax(290px, 1fr)); }
+/* Consistent vertical rhythm between stacked blocks in a panel
+   (fixes missing margin above second-row cards). */
+.panel > * + * { margin-top: 16px; }
+.panel > .grid { margin-bottom: 0; }
 .card {
   background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
   padding: 18px; box-shadow: var(--shadow);
@@ -206,6 +211,12 @@ main { padding: 18px clamp(16px, 4vw, 40px) 40px; }
 
 /* Tickets */
 .chart-wrap { position: relative; height: 320px; margin-top: 6px; }
+
+/* Getting There */
+.airport-row { display: flex; align-items: center; gap: 12px; }
+.airport-row .name { font-weight: 600; font-size: 14px; }
+.airport-row .park { font-size: 12px; color: var(--muted); }
+.links { display: flex; gap: 8px; flex-wrap: wrap; margin-top: 12px; }
 
 /* Discover — encyclopedia + Commons */
 .enc-grid { display: grid; gap: 14px; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); }
