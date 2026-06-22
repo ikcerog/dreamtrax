@@ -1,38 +1,38 @@
 :root {
-  --bg: #0b1020;
-  --bg-soft: #121a30;
-  --card: #161f3a;
-  --card-2: #1c2747;
-  --text: #eaf0ff;
-  --muted: #94a3c4;
-  --accent: #5b8cff;
-  --accent-2: #b46bff;
+  --bg: #0c1117;
+  --bg-soft: #121a22;
+  --card: #15202b;
+  --card-2: #1c2a37;
+  --text: #eaf2f5;
+  --muted: #8da3b0;
+  --accent: #19c3b1;
+  --accent-2: #f5a524;
   --good: #34d399;
   --warn: #fbbf24;
-  --bad: #f87171;
-  --border: #243156;
+  --bad: #f4707f;
+  --border: #243441;
   --shadow: 0 10px 30px rgba(0, 0, 0, .35);
   --radius: 16px;
   --sans: 'Raleway', system-ui, -apple-system, sans-serif;
   --serif: 'Merriweather', Georgia, 'Times New Roman', serif;
 }
 [data-theme="light"] {
-  --bg: #eef2fb;
+  --bg: #eef4f3;
   --bg-soft: #ffffff;
   --card: #ffffff;
-  --card-2: #f3f6ff;
-  --text: #11203f;
-  --muted: #5a6b8c;
-  --border: #dde5f5;
-  --shadow: 0 10px 30px rgba(40, 60, 120, .12);
+  --card-2: #f1f6f5;
+  --text: #122029;
+  --muted: #5a7080;
+  --border: #dce6e6;
+  --shadow: 0 10px 30px rgba(30, 80, 80, .12);
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
   font-family: var(--serif);
-  background: radial-gradient(1200px 600px at 80% -10%, rgba(180,107,255,.18), transparent),
-              radial-gradient(1000px 500px at 0% 0%, rgba(91,140,255,.18), transparent),
+  background: radial-gradient(1200px 600px at 82% -10%, rgba(245,165,36,.14), transparent),
+              radial-gradient(1000px 520px at 0% 0%, rgba(25,195,177,.16), transparent),
               var(--bg);
   color: var(--text);
   min-height: 100vh;
@@ -211,6 +211,25 @@ main { padding: 18px clamp(16px, 4vw, 40px) 40px; }
 
 /* Tickets */
 .chart-wrap { position: relative; height: 320px; margin-top: 6px; }
+
+/* Events banner */
+.events-banner:empty { display: none; }
+.events-banner { margin-bottom: 16px; display: flex; flex-direction: column; gap: 8px; }
+.events-row { display: flex; gap: 8px; flex-wrap: wrap; }
+.event-chip {
+  display: inline-flex; align-items: center; gap: 6px; text-decoration: none;
+  background: var(--card); border: 1px solid var(--border); color: var(--text);
+  padding: 8px 13px; border-radius: 999px; font-size: 13px;
+}
+.event-chip:hover { border-color: var(--accent); text-decoration: none; }
+.event-chip.live { border-color: color-mix(in srgb, var(--bad) 60%, var(--border)); background: color-mix(in srgb, var(--bad) 10%, var(--card)); }
+.event-chip .dot { width: 8px; height: 8px; border-radius: 50%; background: var(--bad); box-shadow: 0 0 0 0 var(--bad); animation: ping 1.6s infinite; }
+@keyframes ping { 0% { box-shadow: 0 0 0 0 color-mix(in srgb, var(--bad) 70%, transparent); } 70% { box-shadow: 0 0 0 7px transparent; } 100% { box-shadow: 0 0 0 0 transparent; } }
+.events-row.upcoming .event-chip { background: var(--card-2); font-size: 12px; padding: 6px 11px; }
+
+/* Traffic map */
+.traffic-wrap { height: 240px; border-radius: 12px; overflow: hidden; margin: 12px 0; border: 1px solid var(--border); }
+.traffic-wrap iframe { width: 100%; height: 100%; border: 0; }
 
 /* Getting There */
 .airport-row { display: flex; align-items: center; gap: 12px; }

@@ -526,6 +526,74 @@
     if (frame && !frame.dataset.init) { playChannel(0); frame.dataset.init = "1"; }
   }
 
+  /* ---------- Events banner (curated festivals/parties) ---------- */
+  function dayDiff(a, b) { return Math.round((a - b) / 86400000); }
+  function fmtDate(s) { return new Date(s + "T12:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }); }
+  function renderEvents() {
+    const wrap = $("#eventsBanner");
+    if (!wrap) return;
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    const rf = state.resortFilter;
+    const evs = CFG.events
+      .filter(e => rf === "all" || e.resort === rf)
+      .map(e => ({ ...e, s: new Date(e.start + "T12:00:00"), e2: new Date(e.end + "T12:00:00") }));
+    const live = evs.filter(e => e.s <= today && today <= e.e2).sort((a, b) => a.e2 - b.e2);
+    const upcoming = evs.filter(e => e.s > today).sort((a, b) => a.s - b.s).slice(0, 4);
+    if (!live.length && !upcoming.length) { wrap.innerHTML = ""; return; }
+    const liveHTML = live.map(e => {
+      const left = dayDiff(e.e2, today);
+      return `<a class="event-chip live" href="${e.url}" target="_blank" rel="noopener">
+        <span class="dot"></span>${e.emoji} <b>${esc(e.name)}</b>
+        <span class="muted"> · LIVE now until ${fmtDate(e.end)}${left <= 14 ? ` (${left}d left)` : ""}</span></a>`;
+    }).join("");
+    const upHTML = upcoming.map(e => {
+      const inDays = dayDiff(e.s, today);
+      return `<a class="event-chip" href="${e.url}" target="_blank" rel="noopener">
+        ${e.emoji} <b>${esc(e.name)}</b>
+        <span class="muted"> · starts ${fmtDate(e.start)}${inDays <= 60 ? ` (in ${inDays}d)` : ""} – ${fmtDate(e.end)}</span></a>`;
+    }).join("");
+    wrap.innerHTML =
+      `<div class="events-row">${liveHTML || `<span class="muted event-none">No live events right now.</span>`}</div>` +
+      (upHTML ? `<div class="events-row upcoming">${upHTML}</div>` : "");
+  }
+
+  /* ---------- Traffic (Waze free live map) ---------- */
+  function setTraffic(which) {
+    const frame = $("#trafficFrame"); if (!frame) return;
+    const r = activeResort();
+    const isAir = which === "airport";
+    frame.src = isAir ? CFG.wazeEmbed(r.alat, r.alng, 13) : CFG.wazeEmbed(r.lat, r.lng, 12);
+    $$("#trafficToggle .pill").forEach(b => b.classList.toggle("active", b.dataset.t === which));
+  }
+  function loadTraffic() {
+    const tog = $("#trafficToggle");
+    if (tog && !tog.dataset.init) {
+      tog.dataset.init = "1";
+      tog.addEventListener("click", (e) => { const b = e.target.closest(".pill"); if (b) setTraffic(b.dataset.t); });
+    }
+    setTraffic("parks");
+  }
+
+  /* ---------- Community Buzz (Reddit free JSON; X/Twitter is paid-only) ---------- */
+  async function loadReddit() {
+    const wrap = $("#redditList");
+    if (!wrap) return;
+    const r = activeResort();
+    wrap.innerHTML = `<p class="muted loading">Loading r/${esc(r.reddit)}…</p>`;
+    const data = await fetchJSONProxied(CFG.redditHot(r.reddit));
+    const posts = (data?.data?.children || [])
+      .map(c => c.data)
+      .filter(p => p && !p.stickied)
+      .slice(0, 8);
+    if (!posts.length) { wrap.innerHTML = `<p class="muted">Trending posts unavailable right now.</p>`; return; }
+    wrap.innerHTML = posts.map(p =>
+      `<a class="news-item" style="display:block;text-decoration:none" href="https://www.reddit.com${p.permalink}" target="_blank" rel="noopener">
+        <span class="src">r/${esc(r.reddit)} · ▲ ${p.ups >= 1000 ? (p.ups / 1000).toFixed(1) + "k" : p.ups}</span>
+        <h4 style="margin:4px 0 2px">${esc(p.title)}</h4>
+        <div class="meta">💬 ${p.num_comments} comments · ${timeAgo(new Date(p.created_utc * 1000))}</div></a>`
+    ).join("");
+  }
+
   /* ---------- Getting There: FAA airport status + road links ---------- */
   async function fetchJSONProxied(url) {
     try { const r = await fetch(url); if (r.ok) return await r.json(); } catch {}
@@ -559,8 +627,9 @@
   async function refreshAll() {
     const btn = $("#refreshBtn");
     btn.disabled = true; btn.textContent = "↻ Loading…";
-    await Promise.all([loadWaits(), loadNews(), loadWeather(), loadAirport()]);
+    await Promise.all([loadWaits(), loadNews(), loadWeather(), loadAirport(), loadReddit()]);
     renderCrowdForecast();
+    renderEvents();
     state.fetchedAt = new Date();
     $("#lastUpdated").textContent = state.fetchedAt.toLocaleString("en-US", { timeZone: "America/New_York" }) + " ET";
     btn.disabled = false; btn.textContent = "↻ Refresh";
@@ -727,6 +796,7 @@
       state.resortFilter = b.dataset.r; draw();
       renderOverviewStats(); renderParkPulse();
       loadWeather(); renderCrowdForecast(); loadAirport();
+      renderEvents(); loadReddit(); setTraffic("parks");
     });
   }
 
@@ -757,6 +827,8 @@
   initTickets();
   initMiniTv();
   renderCrowdForecast();
+  renderEvents();
+  loadTraffic();
   (async () => { await resolveParkIds(); refreshAll(); })();
   setInterval(refreshAll, CFG.refreshMs);
 })();

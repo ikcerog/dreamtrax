@@ -16,23 +16,32 @@ window.DREAMTRAX = {
     { id: 17, short: "DCA", resort: "DLR", name: "California Adventure", nameMatch: "california adventure", companyMatch: "disneyland resort", lat: 33.8060, lng: -117.9221, color: "#38bdf8" },
   ],
 
-  // Resorts (for map focus, filtering, weather, crowd & airport modules).
+  // Resorts (for map focus, filtering, weather, crowd, traffic & airport modules).
   resorts: [
     { id: "WDW", name: "Walt Disney World", center: [28.385, -81.563], zoom: 12,
       tz: "America/New_York", lat: 28.385, lng: -81.563, city: "Lake Buena Vista, FL",
-      airport: "MCO", airportName: "Orlando Intl (MCO)",
+      airport: "MCO", airportName: "Orlando Intl (MCO)", alat: 28.4312, alng: -81.3081,
+      reddit: "WaltDisneyWorld",
       roads: [
         { label: "FL511 Traffic", url: "https://fl511.com/" },
         { label: "MCO Airport", url: "https://orlandoairports.net/" },
       ] },
     { id: "DLR", name: "Disneyland", center: [33.809, -117.918], zoom: 14,
       tz: "America/Los_Angeles", lat: 33.809, lng: -117.918, city: "Anaheim, CA",
-      airport: "SNA", airportName: "John Wayne / Orange County (SNA)",
+      airport: "SNA", airportName: "John Wayne / Orange County (SNA)", alat: 33.6757, alng: -117.8683,
+      reddit: "Disneyland",
       roads: [
         { label: "Caltrans QuickMap", url: "https://quickmap.dot.ca.gov/" },
         { label: "SNA Airport", url: "https://www.ocair.com/" },
       ] },
   ],
+
+  // Waze free live-traffic map (no key). Centered on a park or airport.
+  wazeEmbed: (lat, lng, zoom = 13) =>
+    `https://embed.waze.com/iframe?zoom=${zoom}&lat=${lat}&lon=${lng}&ct=livemap`,
+
+  // Reddit community trending (free JSON, no key) — used in place of paid X/Twitter.
+  redditHot: (sub) => `https://www.reddit.com/r/${sub}/hot.json?limit=12&raw_json=1`,
 
   // News sources via Google News RSS `site:` queries. Clicks route through Google
   // to the original article, so the publishers keep their ad revenue — and Google
@@ -82,10 +91,22 @@ window.DREAMTRAX = {
     { name: "Resort TV Info", yt: "-LqPzc9bYe0", credit: "Courtesy of WDW Today." },
     { name: "Steamboat Willie ’28", archive: "SteamboatWillie",
       credit: "“Steamboat Willie” (1928) — public domain · Internet Archive." },
-    { name: "Plane Crazy ’28", archive: "PlaneCrazy",
-      credit: "“Plane Crazy” (1928) — public domain · Internet Archive." },
-    { name: "Gallopin’ Gaucho ’28", archive: "TheGallopinGaucho",
-      credit: "“The Gallopin’ Gaucho” (1928) — public domain · Internet Archive." },
+  ],
+
+  // Events / festivals calendar. No free Disney events API exists, so these are
+  // curated, APPROXIMATE date ranges — verify on the official sites. Edit freely.
+  events: [
+    // Walt Disney World — EPCOT festivals
+    { name: "EPCOT Festival of the Arts", resort: "WDW", emoji: "🎨", start: "2026-01-16", end: "2026-02-23", url: "https://disneyworld.disney.go.com/events-tours/epcot/epcot-international-festival-of-the-arts/" },
+    { name: "EPCOT Flower & Garden Festival", resort: "WDW", emoji: "🌷", start: "2026-03-04", end: "2026-06-01", url: "https://disneyworld.disney.go.com/events-tours/epcot/epcot-international-flower-and-garden-festival/" },
+    { name: "EPCOT Food & Wine Festival", resort: "WDW", emoji: "🍷", start: "2026-08-27", end: "2026-11-21", url: "https://disneyworld.disney.go.com/events-tours/epcot/epcot-international-food-and-wine-festival/" },
+    { name: "EPCOT Festival of the Holidays", resort: "WDW", emoji: "🎄", start: "2026-11-27", end: "2026-12-30", url: "https://disneyworld.disney.go.com/events-tours/epcot/epcot-international-festival-of-the-holidays/" },
+    { name: "Mickey's Not-So-Scary Halloween Party", resort: "WDW", emoji: "🎃", start: "2026-08-14", end: "2026-10-31", url: "https://disneyworld.disney.go.com/events-tours/magic-kingdom/mickeys-not-so-scary-halloween-party/" },
+    { name: "Mickey's Very Merry Christmas Party", resort: "WDW", emoji: "🎅", start: "2026-11-08", end: "2026-12-22", url: "https://disneyworld.disney.go.com/events-tours/magic-kingdom/mickeys-very-merry-christmas-party/" },
+    // Disneyland Resort
+    { name: "Disney California Adventure Food & Wine", resort: "DLR", emoji: "🍷", start: "2026-02-27", end: "2026-04-13", url: "https://disneyland.disney.go.com/events-tours/disney-california-adventure-food-wine-festival/" },
+    { name: "Halloween Time at the Disneyland Resort", resort: "DLR", emoji: "🎃", start: "2026-08-28", end: "2026-10-31", url: "https://disneyland.disney.go.com/events-tours/halloween-time/" },
+    { name: "Holidays at the Disneyland Resort", resort: "DLR", emoji: "🎄", start: "2026-11-13", end: "2027-01-06", url: "https://disneyland.disney.go.com/events-tours/holidays/" },
   ],
 
   // Ticket pricing. No free/official Disney price API exists, so DreamTrax models
@@ -128,8 +149,15 @@ window.DREAMTRAX = {
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
 
-  version: "1.6.0",
+  version: "1.7.0",
   patchNotes: [
+    { v: "1.7.0", date: "2026-06-22", notes: [
+      "Events banner: live & upcoming festivals/parties with countdowns",
+      "Live traffic map (Waze) in Getting There — Parks/Airport toggle",
+      "Community Buzz: trending Reddit posts (free alternative to paid X/Twitter)",
+      "New brand mark + favicon; refreshed teal/coral color palette",
+      "Removed unverifiable Plane Crazy / Gallopin' Gaucho TV channels",
+    ]},
     { v: "1.6.0", date: "2026-06-22", notes: [
       "Renamed Radio & TV tab to TV; removed the duplicate Resort TV card",
       "Player now supports Internet Archive + YouTube channels with credits",
