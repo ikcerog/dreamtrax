@@ -162,8 +162,13 @@ window.DREAMTRAX = {
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
 
-  version: "1.8.0",
+  version: "1.8.1",
   patchNotes: [
+    { v: "1.8.1", date: "2026-06-22", notes: [
+      "New plum & terracotta color palette",
+      "Fixed live park data over CORS by routing the park index through the proxy chain",
+      "Event names now render in the UI sans-serif",
+    ]},
     { v: "1.8.0", date: "2026-06-22", notes: [
       "More reliable live data: park IDs matched by geo-coordinates (fixes Disneyland)",
       "Removed the TV tab; the videos now live in Discover",

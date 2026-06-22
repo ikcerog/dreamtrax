@@ -118,8 +118,9 @@
      with the one in Paris (which is why Disneyland was showing closed). */
   async function resolveParkIds() {
     try {
-      const res = await fetch(CFG.parksIndexUrl);
-      const companies = await res.json();
+      // parks.json lacks CORS headers, so go through the proxy chain.
+      const companies = await fetchJSONProxied(CFG.parksIndexUrl);
+      if (!companies) throw new Error("no parks index");
       const flat = [];
       companies.forEach(c => (c.parks || []).forEach(p =>
         flat.push({ name: (p.name || "").toLowerCase(), id: p.id,
