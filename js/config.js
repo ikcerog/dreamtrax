@@ -74,11 +74,18 @@ window.DREAMTRAX = {
   faaStatus: (code) => `https://soa.smext.faa.gov/asws/api/airport/status/${code}`,
 
   // DreamTrax TV — channels can be YouTube (yt) or Internet Archive (archive).
-  // Add any working URL's id here; everything is public-domain or creator-credited.
+  // Channel 1 is the verified-working Resort TV loop, so the tab always plays.
+  // The Internet Archive identifiers below are best-effort public-domain Disney
+  // 1928 Mickey shorts; if one fails to load, the identifier is just the part
+  // after archive.org/details/ — swap it here (or paste a known-good one).
   tvChannels: [
     { name: "Resort TV Info", yt: "-LqPzc9bYe0", credit: "Courtesy of WDW Today." },
-    { name: "Steamboat Willie ’28", archive: "steamboat-willie-1928_202002",
-      credit: "“Steamboat Willie” (1928) — public domain, via the Internet Archive." },
+    { name: "Steamboat Willie ’28", archive: "SteamboatWillie",
+      credit: "“Steamboat Willie” (1928) — public domain · Internet Archive." },
+    { name: "Plane Crazy ’28", archive: "PlaneCrazy",
+      credit: "“Plane Crazy” (1928) — public domain · Internet Archive." },
+    { name: "Gallopin’ Gaucho ’28", archive: "TheGallopinGaucho",
+      credit: "“The Gallopin’ Gaucho” (1928) — public domain · Internet Archive." },
   ],
 
   // Ticket pricing. No free/official Disney price API exists, so DreamTrax models
@@ -121,8 +128,13 @@ window.DREAMTRAX = {
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
 
-  version: "1.5.1",
+  version: "1.6.0",
   patchNotes: [
+    { v: "1.6.0", date: "2026-06-22", notes: [
+      "Renamed Radio & TV tab to TV; removed the duplicate Resort TV card",
+      "Player now supports Internet Archive + YouTube channels with credits",
+      "Added public-domain Disney 1928 Mickey shorts as TV channels",
+    ]},
     { v: "1.5.1", date: "2026-06-22", notes: [
       "Moved Mini TV Station to the Radio & TV tab; retired the non-working radio player",
       "Overview row now ends with the Getting There card",
