@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>DreamTrax · Walt Disney World Dashboard</title>
+  <meta name="description" content="A live, interactive Walt Disney World dashboard: ride wait times, an interactive park map, the latest Disney news headlines, resort radio, and the in-room resort TV channel." />
+
+  <!-- Leaflet (open-source map) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"
+    integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"
+    integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="css/styles.css" />
+</head>
+<body data-theme="dark">
+  <header class="topbar">
+    <div class="brand">
+      <span class="brand-mark">✦</span>
+      <div>
+        <h1>DreamTrax</h1>
+        <p class="tagline">Your live Walt Disney World command center</p>
+      </div>
+    </div>
+    <div class="topbar-actions">
+      <span id="clock" class="clock" title="Orlando local time"></span>
+      <button id="refreshBtn" class="btn" title="Refresh live data">↻ Refresh</button>
+      <button id="themeBtn" class="btn icon" title="Toggle theme">◑</button>
+    </div>
+  </header>
+
+  <nav class="tabs" role="tablist">
+    <button class="tab active" data-tab="overview" role="tab">Overview</button>
+    <button class="tab" data-tab="waits" role="tab">Wait Times</button>
+    <button class="tab" data-tab="map" role="tab">Park Map</button>
+    <button class="tab" data-tab="news" role="tab">News</button>
+    <button class="tab" data-tab="media" role="tab">Radio &amp; TV</button>
+  </nav>
+
+  <main>
+    <!-- OVERVIEW -->
+    <section id="overview" class="panel active">
+      <div class="grid">
+        <div class="card stat-card">
+          <h3>Parks Open</h3>
+          <p id="statParks" class="stat">—</p>
+          <span class="muted">Live from queue-times.com</span>
+        </div>
+        <div class="card stat-card">
+          <h3>Avg Wait</h3>
+          <p id="statAvg" class="stat">—</p>
+          <span class="muted">Across all open rides</span>
+        </div>
+        <div class="card stat-card">
+          <h3>Shortest Now</h3>
+          <p id="statShort" class="stat small">—</p>
+          <span class="muted" id="statShortPark"></span>
+        </div>
+        <div class="card stat-card">
+          <h3>Longest Now</h3>
+          <p id="statLong" class="stat small">—</p>
+          <span class="muted" id="statLongPark"></span>
+        </div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <div class="card-head"><h3>🎢 Top Wait Times Right Now</h3></div>
+          <div id="overviewWaits" class="list compact"><p class="muted loading">Loading…</p></div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>📰 Latest Disney Headlines</h3></div>
+          <div id="overviewNews" class="list compact"><p class="muted loading">Loading…</p></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- WAIT TIMES -->
+    <section id="waits" class="panel">
+      <div class="card">
+        <div class="card-head">
+          <h3>🎢 Live Ride Wait Times</h3>
+          <div class="filters" id="parkFilters"></div>
+        </div>
+        <div class="toolbar">
+          <input id="waitSearch" class="search" type="search" placeholder="Search a ride…" />
+          <label class="check"><input type="checkbox" id="openOnly" checked /> Open only</label>
+          <select id="waitSort" class="select">
+            <option value="wait-desc">Longest first</option>
+            <option value="wait-asc">Shortest first</option>
+            <option value="name">A → Z</option>
+          </select>
+        </div>
+        <div id="waitList" class="list"><p class="muted loading">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- MAP -->
+    <section id="map" class="panel">
+      <div class="card map-card">
+        <div class="card-head"><h3>🗺️ Walt Disney World Resort Map</h3>
+          <span class="muted">Click a park to jump to its live waits</span>
+        </div>
+        <div id="leafletMap"></div>
+      </div>
+    </section>
+
+    <!-- NEWS -->
+    <section id="news" class="panel">
+      <div class="card">
+        <div class="card-head">
+          <h3>📰 Disney News Wire</h3>
+          <div class="filters" id="newsFilters"></div>
+        </div>
+        <div id="newsList" class="list"><p class="muted loading">Loading…</p></div>
+      </div>
+    </section>
+
+    <!-- MEDIA -->
+    <section id="media" class="panel">
+      <div class="grid two">
+        <div class="card">
+          <div class="card-head"><h3>📻 Sorcerer Radio</h3></div>
+          <p class="muted">Streaming Disney park music &amp; resort area loops. Press play.</p>
+          <audio id="radio" controls preload="none" crossorigin="anonymous" style="width:100%">
+            <source src="https://streamdb3web.securenetsystems.net/v5/SORCERER" type="audio/mpeg" />
+          </audio>
+          <p class="credit">Audio © Sorcerer Radio. Streamed via their public webcast.</p>
+          <div class="links">
+            <a class="chip" href="https://www.sorcererradio.com/" target="_blank" rel="noopener">Sorcerer Radio ↗</a>
+          </div>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>📺 Resort TV Info Channel</h3></div>
+          <p class="muted">A faithful replica of the in-room resort TV information station.</p>
+          <div class="video-wrap">
+            <iframe
+              src="https://www.youtube-nocookie.com/embed/-LqPzc9bYe0"
+              title="WDW Resort TV Channel" loading="lazy"
+              frameborder="0"
+              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+              allowfullscreen></iframe>
+          </div>
+          <p class="credit">Video courtesy of <a href="https://www.youtube.com/watch?v=-LqPzc9bYe0" target="_blank" rel="noopener">WDW Today</a>. All rights to original creator.</p>
+        </div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footer">
+    <p>DreamTrax is a fan-made dashboard and is <strong>not affiliated with, endorsed by, or sponsored by The Walt Disney Company</strong>.
+    Data via <a href="https://queue-times.com" target="_blank" rel="noopener">queue-times.com</a> · News via AllEars, WDWNT, Disney Parks Blog &amp; WDW News Today.</p>
+    <p class="muted">Last updated: <span id="lastUpdated">—</span></p>
+  </footer>
+
+  <script src="js/config.js"></script>
+  <script src="js/app.js"></script>
+</body>
+</html>
