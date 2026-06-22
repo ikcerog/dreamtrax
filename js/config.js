@@ -1,19 +1,33 @@
 /* DreamTrax configuration — edit sources here. */
 window.DREAMTRAX = {
-  // queue-times.com park IDs for Walt Disney World Resort.
+  // queue-times.com park IDs. Two resorts; live data for whichever is open.
   parks: [
-    { id: 6, name: "Magic Kingdom",      short: "MK",  lat: 28.4177, lng: -81.5812, color: "#5b8cff" },
-    { id: 5, name: "EPCOT",              short: "EP",  lat: 28.3747, lng: -81.5494, color: "#b46bff" },
-    { id: 7, name: "Hollywood Studios",  short: "HS",  lat: 28.3575, lng: -81.5601, color: "#34d399" },
-    { id: 8, name: "Animal Kingdom",     short: "AK",  lat: 28.3553, lng: -81.5901, color: "#fbbf24" },
+    // Walt Disney World Resort (Florida / Eastern time)
+    { id: 6, name: "Magic Kingdom",          short: "MK",  resort: "WDW", lat: 28.4177, lng: -81.5812, color: "#5b8cff" },
+    { id: 5, name: "EPCOT",                   short: "EP",  resort: "WDW", lat: 28.3747, lng: -81.5494, color: "#b46bff" },
+    { id: 7, name: "Hollywood Studios",       short: "HS",  resort: "WDW", lat: 28.3575, lng: -81.5601, color: "#34d399" },
+    { id: 8, name: "Animal Kingdom",          short: "AK",  resort: "WDW", lat: 28.3553, lng: -81.5901, color: "#fbbf24" },
+    // Disneyland Resort (California / Pacific time)
+    { id: 16, name: "Disneyland Park",        short: "DL",  resort: "DLR", lat: 33.8121, lng: -117.9190, color: "#f472b6" },
+    { id: 17, name: "California Adventure",    short: "DCA", resort: "DLR", lat: 33.8060, lng: -117.9221, color: "#38bdf8" },
   ],
 
-  // RSS news sources. Fetched client-side as raw XML and parsed in-browser.
+  // Resorts (for map focus + filtering).
+  resorts: [
+    { id: "WDW", name: "Walt Disney World", center: [28.385, -81.563], zoom: 12, tz: "America/New_York" },
+    { id: "DLR", name: "Disneyland",        center: [33.809, -117.918], zoom: 14, tz: "America/Los_Angeles" },
+  ],
+
+  // News sources via Google News RSS `site:` queries. Clicks route through Google
+  // to the original article, so the publishers keep their ad revenue — and Google
+  // News is a reliable, CORS-friendly feed host. `when:7d` keeps it fresh.
+  googleNews: (query) =>
+    `https://news.google.com/rss/search?q=${encodeURIComponent(query + " when:7d")}&hl=en-US&gl=US&ceid=US:en`,
   news: [
-    { name: "Disney Parks Blog", url: "https://disneyparks.disney.go.com/blog/feed/" },
-    { name: "AllEars",           url: "https://allears.net/feed/" },
-    { name: "WDWNT",             url: "https://wdwnt.com/feed/" },
-    { name: "WDW News Today",    url: "https://wdwnt.com/category/walt-disney-world/feed/" },
+    { name: "Disney Parks Blog", query: "site:disneyparks.disney.go.com" },
+    { name: "AllEars",           query: "site:allears.net" },
+    { name: "WDW News Today",    query: "site:wdwnt.com" },
+    { name: "Disney Parks News", query: '"Walt Disney World" OR "Disneyland" theme park' },
   ],
 
   // Fallback chain of free, no-key CORS proxies. Each takes an encoded URL and

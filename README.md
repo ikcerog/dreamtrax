@@ -6,9 +6,9 @@ A live, interactive **Walt Disney World** dashboard — ride wait times, an inte
 
 ## ✨ Features
 
-- **Live wait times** for all four WDW parks (Magic Kingdom, EPCOT, Hollywood Studios, Animal Kingdom) via the free [queue-times.com](https://queue-times.com) API — no key required.
-- **Interactive park map** (Leaflet + OpenStreetMap/CARTO tiles). Click a park to jump to its live waits.
-- **Disney news wire** aggregating Disney Parks Blog, AllEars, and WDW News Today / WDWNT RSS feeds, filterable by source.
+- **Live wait times** for **both resorts** — Walt Disney World (Magic Kingdom, EPCOT, Hollywood Studios, Animal Kingdom) **and Disneyland** (Disneyland Park, California Adventure) — via the free [queue-times.com](https://queue-times.com) API, no key required.
+- **Interactive park map** (Leaflet + OpenStreetMap/CARTO tiles) with a **WDW ↔ Disneyland toggle**. Click a park to jump to its live waits.
+- **Disney news wire** via **Google News RSS** `site:` feeds for Disney Parks Blog, AllEars, and WDW News Today / WDWNT — clicks route through Google to the original article so **publishers keep their ad revenue** — filterable by source.
 - **Overview** tab with at-a-glance stats: parks open, average wait, shortest & longest standby right now.
 - **💓 Park Pulse** *(original)* — DreamTrax snapshots wait times locally on every refresh, so it can show whether each ride's line is **▲ rising / ▼ falling** and gauge each park's live **crowd momentum** — no paid or historical API needed.
 - **🌤️ Weather & Golden Hour** *(original)* — current resort conditions plus **sunrise/sunset golden-hour windows** for park photographers, via the free, key-less [Open-Meteo](https://open-meteo.com) API.

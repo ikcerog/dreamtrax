@@ -264,11 +264,20 @@
 
   async function loadNews() {
     const batches = await Promise.all(CFG.news.map(async (src) => {
-      const xml = await fetchFeedText(src.url);
+      const feedUrl = src.url || CFG.googleNews(src.query);
+      const xml = await fetchFeedText(feedUrl);
       if (!xml) { console.warn(`News: all proxies failed for ${src.name}`); return []; }
-      return parseFeed(xml, src.name).filter(i => i.title && i.link);
+      return parseFeed(xml, src.name)
+        .filter(i => i.title && i.link)
+        // Google News appends " - Publisher" to titles; trim for a cleaner wire.
+        .map(i => ({ ...i, title: i.title.replace(/\s+-\s+[^-]+$/, "").trim() }));
     }));
-    const items = batches.flat();
+    // De-dupe by title (aggregated queries can overlap), newest first.
+    const seen = new Set();
+    const items = batches.flat().filter(i => {
+      const k = i.title.toLowerCase();
+      if (seen.has(k)) return false; seen.add(k); return true;
+    });
     items.sort((a, b) => new Date(b.date) - new Date(a.date));
     state.news = items;
     renderNews();
@@ -310,14 +319,32 @@
   }
 
   /* ---------- Map ---------- */
+  function focusResort(resortId) {
+    const r = CFG.resorts.find(x => x.id === resortId) || CFG.resorts[0];
+    state.resort = r.id;
+    if (state.map) state.map.flyTo(r.center, r.zoom, { duration: .8 });
+    renderResortToggle();
+  }
+  function renderResortToggle() {
+    const wrap = $("#resortToggle");
+    if (!wrap) return;
+    wrap.innerHTML = CFG.resorts.map(r =>
+      `<button class="pill ${r.id === state.resort ? "active" : ""}" data-resort="${r.id}">${esc(r.name)}</button>`
+    ).join("");
+    $$("#resortToggle .pill").forEach(b => b.addEventListener("click", () => focusResort(b.dataset.resort)));
+  }
+
   function initMap() {
-    const map = L.map("leafletMap", { scrollWheelZoom: false }).setView([28.385, -81.563], 12);
+    state.resort = CFG.resorts[0].id;
+    const r0 = CFG.resorts[0];
+    const map = L.map("leafletMap", { scrollWheelZoom: false }).setView(r0.center, r0.zoom);
     L.tileLayer("https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png", {
       attribution: '&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> &copy; <a href="https://carto.com/attributions">CARTO</a>',
       maxZoom: 19,
     }).addTo(map);
     state.map = map;
     state.markers = {};
+    renderResortToggle();
     CFG.parks.forEach(p => {
       const marker = L.circleMarker([p.lat, p.lng], {
         radius: 12, color: "#fff", weight: 2, fillColor: p.color, fillOpacity: .9,
