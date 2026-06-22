@@ -51,7 +51,6 @@
     <button class="tab" data-tab="tickets" role="tab">Tickets</button>
     <button class="tab" data-tab="discover" role="tab">Discover</button>
     <button class="tab" data-tab="news" role="tab">News</button>
-    <button class="tab" data-tab="media" role="tab">TV</button>
   </nav>
 
   <main>
@@ -184,14 +183,13 @@
 
       <div class="grid two">
         <div class="card">
-          <div class="card-head"><h3>📽️ Vintage Vault</h3>
-            <span class="muted">Public domain</span></div>
-          <p class="muted">“Steamboat Willie” (1928) entered the public domain on January 1, 2024.</p>
-          <div class="video-wrap">
-            <iframe src="https://archive.org/embed/SteamboatWillie" title="Steamboat Willie (1928, public domain)"
-              loading="lazy" frameborder="0" allowfullscreen></iframe>
-          </div>
-          <p class="credit">Public domain · Browse more on the <a href="https://archive.org/details/animationandcartoons" target="_blank" rel="noopener">Internet Archive ↗</a></p>
+          <div class="card-head"><h3>📺 DreamTrax TV</h3><span class="muted" id="tvNowPlaying"></span></div>
+          <p class="muted">A looping, in-room-resort-style station. Pick a channel below.</p>
+          <div class="filters spaced" id="tvChannels"></div>
+          <div class="video-wrap"><iframe id="miniTvFrame" src="" title="DreamTrax TV"
+            loading="lazy" frameborder="0"
+            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+          <p class="credit" id="tvCredit"></p>
         </div>
         <div class="card">
           <div class="card-head"><h3>📷 Free Photo Stream</h3>
@@ -219,19 +217,6 @@
           <div class="card-head"><h3>🔥 Community Buzz</h3><span class="muted">Trending on Reddit</span></div>
           <div id="redditList" class="list compact"><p class="muted loading">Loading…</p></div>
         </div>
-      </div>
-    </section>
-
-    <!-- TV -->
-    <section id="media" class="panel">
-      <div class="card">
-        <div class="card-head"><h3>📺 DreamTrax TV</h3><span class="muted" id="tvNowPlaying"></span></div>
-        <p class="muted">A looping, in-room-resort-style info station. Pick a channel below.</p>
-        <div class="filters spaced" id="tvChannels"></div>
-        <div class="video-wrap"><iframe id="miniTvFrame" src="" title="DreamTrax TV"
-          loading="lazy" frameborder="0"
-          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
-        <p class="credit" id="tvCredit"></p>
       </div>
     </section>
   </main>

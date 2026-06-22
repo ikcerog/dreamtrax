@@ -17,9 +17,8 @@ A live, interactive **Walt Disney World** dashboard — ride wait times, an inte
 - **🎟️ Events banner** — live & upcoming festivals/parties (EPCOT festivals, Halloween/Christmas parties, Disneyland seasons) with countdowns; curated, clearly-labeled dates.
 - **🚗 Live traffic map** — free, no-key **Waze** live-traffic embed in *Getting There*, with a Parks/Airport toggle, alongside FAA airport status.
 - **🔥 Community Buzz** — trending posts from r/WaltDisneyWorld & r/Disneyland via Reddit's free JSON (used in place of the now paywalled X/Twitter API).
-- **🏰 Discover tab** — a **Park Encyclopedia** (live Wikipedia REST summaries + Wikimedia Commons thumbnails for all six parks), a **freely-licensed Commons photo stream** (each image links to its source & license), and a **Vintage Vault** embedding the public-domain *Steamboat Willie* (1928) from the Internet Archive. All free, royalty-free, no keys, fully attributed.
+- **🏰 Discover tab** — a **Park Encyclopedia** (live Wikipedia REST summaries + Wikimedia Commons thumbnails for all six parks), a varied **freely-licensed Commons photo stream** (resorts, attractions, historical; each image links to its source & license), and **DreamTrax TV**, a looping in-room-resort-style player with switchable channels (the WDW Today resort loop + public-domain *Steamboat Willie* via the Internet Archive).
 - **Version chip** with in-app **patch notes**, and an **All / WDW / Disneyland** resort toggle on the Overview.
-- **Sorcerer Radio** stream and the **Resort TV info channel** (replica courtesy of WDW Today).
 - **Light/dark theme**, auto-refresh every 5 minutes, Orlando local clock.
 
 ### Why the news wire is robust
@@ -34,9 +33,10 @@ Rather than depending on one RSS-to-JSON service (which rate-limits), DreamTrax 
 | News           | Raw RSS/Atom via a fallback chain of free CORS proxies, parsed in-browser |
 | Weather        | [Open-Meteo](https://open-meteo.com) (free, no key) |
 | Encyclopedia   | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) + [Wikimedia Commons](https://commons.wikimedia.org) (CC BY-SA) |
-| Vintage media  | [Internet Archive](https://archive.org) + public-domain YouTube |
+| Vintage media  | [Internet Archive](https://archive.org) (public domain) |
 | Airport status | [FAA ASWS](https://soa.smext.faa.gov) (free, no key) |
-| Radio          | Sorcerer Radio public webcast |
+| Traffic        | [Waze](https://www.waze.com/live-map) live-map embed (free, no key) |
+| Community      | Reddit free JSON (r/WaltDisneyWorld, r/Disneyland) |
 | Resort TV      | YouTube embed (credit: WDW Today) |
 | Charts         | [Chart.js](https://www.chartjs.org) |
 | Fonts          | Raleway (sans) + Merriweather (serif), Google Fonts |
@@ -72,9 +72,10 @@ Edit [`js/config.js`](js/config.js) to add/remove parks or news sources, or chan
 
 - Wait-time data: **queue-times.com**
 - News: **Disney Parks Blog**, **AllEars**, **WDW News Today / WDWNT** (headlines link back to original articles)
-- Radio: **Sorcerer Radio**
+- Community: **Reddit** (r/WaltDisneyWorld, r/Disneyland)
 - Resort TV channel video: **WDW Today** — all rights to the original creator
-- Map data: **© OpenStreetMap contributors, © CARTO**
+- Vintage media: **Internet Archive** (public domain)
+- Traffic: **Waze** · Map data: **© OpenStreetMap contributors, © CARTO**
 
 ## ⚖️ License
 

@@ -139,8 +139,21 @@ window.DREAMTRAX = {
     // Wikimedia Commons "Picture of the day" style feed — freely-licensed media.
     commonsSearch: (q) =>
       `https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search` +
-      `&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=8&prop=imageinfo` +
+      `&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=12&prop=imageinfo` +
       `&iiprop=url|extmetadata&iiurlwidth=480`,
+    // Rotated for variety — resorts, attractions, and historical imagery.
+    commonsQueries: [
+      "Cinderella Castle Magic Kingdom",
+      "EPCOT Spaceship Earth",
+      "Disneyland Sleeping Beauty Castle",
+      "Disney California Adventure",
+      "Disney's Animal Kingdom Tree of Life",
+      "Disney's Hollywood Studios",
+      "Walt Disney World Monorail",
+      "Disneyland 1960s",
+      "Disneyland opening 1955",
+      "Magic Kingdom fireworks",
+    ],
     // Internet Archive: Steamboat Willie (1928) — public domain since 2024-01-01.
     archiveItem: "SteamboatWillie",
     archiveCollectionUrl: "https://archive.org/details/disney",
@@ -149,22 +162,26 @@ window.DREAMTRAX = {
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
 
-  version: "1.7.0",
+  version: "1.8.0",
   patchNotes: [
+    { v: "1.8.0", date: "2026-06-22", notes: [
+      "More reliable live data: park IDs matched by geo-coordinates (fixes Disneyland)",
+      "Removed the TV tab; the videos now live in Discover",
+      "Taller, responsive live traffic map",
+      "More variety in the Wikimedia Commons photo stream (resorts, attractions, historical)",
+    ]},
     { v: "1.7.0", date: "2026-06-22", notes: [
       "Events banner: live & upcoming festivals/parties with countdowns",
-      "Live traffic map (Waze) in Getting There — Parks/Airport toggle",
-      "Community Buzz: trending Reddit posts (free alternative to paid X/Twitter)",
-      "New brand mark + favicon; refreshed teal/coral color palette",
-      "Removed unverifiable Plane Crazy / Gallopin' Gaucho TV channels",
+      "Live traffic map in Getting There — Parks/Airport toggle",
+      "Community Buzz: trending Reddit posts from the Disney communities",
+      "New brand mark + favicon; refreshed teal & warm-gold color palette",
     ]},
     { v: "1.6.0", date: "2026-06-22", notes: [
-      "Renamed Radio & TV tab to TV; removed the duplicate Resort TV card",
-      "Player now supports Internet Archive + YouTube channels with credits",
-      "Added public-domain Disney 1928 Mickey shorts as TV channels",
+      "Player supports Internet Archive + YouTube channels with credits",
+      "Added public-domain Disney 1928 shorts as channels",
     ]},
     { v: "1.5.1", date: "2026-06-22", notes: [
-      "Moved Mini TV Station to the Radio & TV tab; retired the non-working radio player",
+      "Consolidated media into a single looping TV experience",
       "Overview row now ends with the Getting There card",
     ]},
     { v: "1.5.0", date: "2026-06-22", notes: [

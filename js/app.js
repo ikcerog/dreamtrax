@@ -25,7 +25,6 @@
     if (tab.dataset.tab === "map" && state.map) setTimeout(() => state.map.invalidateSize(), 60);
     if (tab.dataset.tab === "tickets") setTimeout(() => renderTicketChart(), 60);
     if (tab.dataset.tab === "discover") loadDiscover();
-    if (tab.dataset.tab === "media") loadMiniTv();
   }));
 
   function showTab(name) {
@@ -114,19 +113,26 @@
   }
 
   /* ---------- Source verification: resolve real park IDs from queue-times ----------
-     Avoids hardcoded-ID drift (e.g. the two "Disneyland Park"s in Anaheim vs Paris)
-     by matching each configured park against queue-times' own parks.json. */
+     Matches each configured park by name, then disambiguates by GEO-DISTANCE to its
+     known coordinates — so e.g. Anaheim's "Disneyland Park" can never be confused
+     with the one in Paris (which is why Disneyland was showing closed). */
   async function resolveParkIds() {
     try {
       const res = await fetch(CFG.parksIndexUrl);
       const companies = await res.json();
       const flat = [];
       companies.forEach(c => (c.parks || []).forEach(p =>
-        flat.push({ company: (c.name || "").toLowerCase(), name: (p.name || "").toLowerCase(), id: p.id })));
+        flat.push({ name: (p.name || "").toLowerCase(), id: p.id,
+          lat: parseFloat(p.latitude), lng: parseFloat(p.longitude) })));
       CFG.parks.forEach(cp => {
-        const m = flat.find(f => f.name.includes(cp.nameMatch) &&
-          (!cp.companyMatch || f.company.includes(cp.companyMatch)));
-        cp.resolvedId = m ? m.id : cp.id;
+        const cands = flat.filter(f => f.name.includes(cp.nameMatch));
+        let best = null, bestD = Infinity;
+        for (const c of cands) {
+          if (isNaN(c.lat) || isNaN(c.lng)) continue;
+          const d = (c.lat - cp.lat) ** 2 + (c.lng - cp.lng) ** 2;
+          if (d < bestD) { bestD = d; best = c; }
+        }
+        cp.resolvedId = best ? best.id : (cands[0]?.id ?? cp.id);
       });
       console.info("DreamTrax resolved park IDs:", CFG.parks.map(p => `${p.short}=${p.resolvedId}`).join(" "));
     } catch (e) {
@@ -763,13 +769,20 @@
       }
     }));
 
-    // Wikimedia Commons — freely-licensed photo stream.
+    // Wikimedia Commons — freely-licensed photo stream, varied across several
+    // queries (resorts, attractions, historical) and shuffled for variety.
     try {
-      const res = await fetch(D.commonsSearch("Magic Kingdom castle Walt Disney World"));
-      const data = await res.json();
-      const pages = Object.values(data?.query?.pages || {})
+      const queries = [...D.commonsQueries].sort(() => Math.random() - 0.5).slice(0, 4);
+      const batches = await Promise.all(queries.map(async q => {
+        try { const r = await fetch(D.commonsSearch(q)); const d = await r.json();
+          return Object.values(d?.query?.pages || {}); } catch { return []; }
+      }));
+      const seen = new Set();
+      const pages = batches.flat()
         .filter(pg => pg.imageinfo?.[0]?.thumburl)
-        .slice(0, 8);
+        .filter(pg => { if (seen.has(pg.pageid)) return false; seen.add(pg.pageid); return true; })
+        .sort(() => Math.random() - 0.5)
+        .slice(0, 12);
       $("#commonsGrid").innerHTML = pages.length ? pages.map(pg => {
         const ii = pg.imageinfo[0];
         const meta = ii.extmetadata || {};
@@ -781,6 +794,8 @@
     } catch {
       $("#commonsGrid").innerHTML = `<p class="muted">Photo stream temporarily unavailable.</p>`;
     }
+
+    loadMiniTv(); // the TV player now lives on the Discover tab
   }
 
   /* ---------- Overview resort toggle ---------- */
