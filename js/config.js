@@ -73,10 +73,12 @@ window.DREAMTRAX = {
   // FAA Airport Status (free, no key). Routed via the CORS-proxy chain.
   faaStatus: (code) => `https://soa.smext.faa.gov/asws/api/airport/status/${code}`,
 
-  // Mini TV Station — public-domain / freely-shared channels (YouTube nocookie).
+  // DreamTrax TV — channels can be YouTube (yt) or Internet Archive (archive).
+  // Add any working URL's id here; everything is public-domain or creator-credited.
   tvChannels: [
-    { name: "Steamboat Willie ’28", yt: "BBgghnQF6E4" }, // Disney official, public domain
-    { name: "Resort TV Info",       yt: "-LqPzc9bYe0" }, // courtesy WDW Today
+    { name: "Resort TV Info", yt: "-LqPzc9bYe0", credit: "Courtesy of WDW Today." },
+    { name: "Steamboat Willie ’28", archive: "steamboat-willie-1928_202002",
+      credit: "“Steamboat Willie” (1928) — public domain, via the Internet Archive." },
   ],
 
   // Ticket pricing. No free/official Disney price API exists, so DreamTrax models

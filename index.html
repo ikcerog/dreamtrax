@@ -41,7 +41,7 @@
     <button class="tab" data-tab="tickets" role="tab">Tickets</button>
     <button class="tab" data-tab="discover" role="tab">Discover</button>
     <button class="tab" data-tab="news" role="tab">News</button>
-    <button class="tab" data-tab="media" role="tab">Radio &amp; TV</button>
+    <button class="tab" data-tab="media" role="tab">TV</button>
   </nav>
 
   <main>
@@ -198,31 +198,16 @@
       </div>
     </section>
 
-    <!-- MEDIA -->
+    <!-- TV -->
     <section id="media" class="panel">
-      <div class="grid two">
-        <div class="card">
-          <div class="card-head"><h3>📺 Mini TV Station</h3><span class="muted">Public domain</span></div>
-          <p class="muted">A looping in-room-style info station. Switch channels below.</p>
-          <div class="filters spaced" id="tvChannels"></div>
-          <div class="video-wrap"><iframe id="miniTvFrame" src="" title="DreamTrax Mini TV Station"
-            loading="lazy" frameborder="0"
-            allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
-          <p class="credit">Channels are public-domain or creator-credited. Steamboat Willie (1928) is public domain; Resort TV courtesy of WDW Today.</p>
-        </div>
-        <div class="card">
-          <div class="card-head"><h3>📺 Resort TV Info Channel</h3></div>
-          <p class="muted">A faithful replica of the in-room resort TV information station.</p>
-          <div class="video-wrap">
-            <iframe
-              src="https://www.youtube-nocookie.com/embed/-LqPzc9bYe0"
-              title="WDW Resort TV Channel" loading="lazy"
-              frameborder="0"
-              allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-              allowfullscreen></iframe>
-          </div>
-          <p class="credit">Video courtesy of <a href="https://www.youtube.com/watch?v=-LqPzc9bYe0" target="_blank" rel="noopener">WDW Today</a>. All rights to original creator.</p>
-        </div>
+      <div class="card">
+        <div class="card-head"><h3>📺 DreamTrax TV</h3><span class="muted" id="tvNowPlaying"></span></div>
+        <p class="muted">A looping, in-room-resort-style info station. Pick a channel below.</p>
+        <div class="filters spaced" id="tvChannels"></div>
+        <div class="video-wrap"><iframe id="miniTvFrame" src="" title="DreamTrax TV"
+          loading="lazy" frameborder="0"
+          allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe></div>
+        <p class="credit" id="tvCredit"></p>
       </div>
     </section>
   </main>

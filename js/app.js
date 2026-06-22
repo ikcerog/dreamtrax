@@ -495,26 +495,35 @@
     wrap.innerHTML = `<div class="muted" style="margin-bottom:8px">📍 ${esc(r.name)} · predicted</div>${rows.join("")}`;
   }
 
-  /* ---------- Mini TV Station ---------- */
-  function tvSrc(yt) {
-    return `https://www.youtube-nocookie.com/embed/${yt}?autoplay=1&mute=1&loop=1&playlist=${yt}&rel=0`;
+  /* ---------- DreamTrax TV ---------- */
+  function tvSrc(ch) {
+    if (ch.archive) return `https://archive.org/embed/${ch.archive}`;
+    return `https://www.youtube-nocookie.com/embed/${ch.yt}?autoplay=1&mute=1&loop=1&playlist=${ch.yt}&rel=0`;
+  }
+  function playChannel(i) {
+    const ch = CFG.tvChannels[i]; if (!ch) return;
+    $("#miniTvFrame").src = tvSrc(ch);
+    const np = $("#tvNowPlaying"), cr = $("#tvCredit");
+    if (np) np.textContent = "▶ " + ch.name;
+    if (cr) cr.textContent = ch.credit || "";
+    const bar = $("#tvChannels");
+    if (bar) [...bar.children].forEach((x, j) => x.classList.toggle("active", j === i));
   }
   function initMiniTv() {
-    const frame = $("#miniTvFrame"), bar = $("#tvChannels");
-    if (!frame || !bar) return;
+    const bar = $("#tvChannels");
+    if (!bar) return;
     bar.innerHTML = CFG.tvChannels.map((c, i) =>
-      `<button class="pill ${i === 0 ? "active" : ""}" data-yt="${c.yt}">${esc(c.name)}</button>`).join("");
+      `<button class="pill ${i === 0 ? "active" : ""}" data-i="${i}">${esc(c.name)}</button>`).join("");
     bar.addEventListener("click", (e) => {
       const b = e.target.closest(".pill"); if (!b) return;
-      [...bar.children].forEach(x => x.classList.remove("active")); b.classList.add("active");
-      frame.src = tvSrc(b.dataset.yt);
+      playChannel(+b.dataset.i);
     });
   }
-  // Load the first channel only when the Radio & TV tab is opened (saves bandwidth,
-  // and avoids a hidden player running in the background).
+  // Load the first channel only when the TV tab is opened (saves bandwidth and
+  // avoids a hidden player running in the background).
   function loadMiniTv() {
     const frame = $("#miniTvFrame");
-    if (frame && !frame.dataset.init) { frame.src = tvSrc(CFG.tvChannels[0].yt); frame.dataset.init = "1"; }
+    if (frame && !frame.dataset.init) { playChannel(0); frame.dataset.init = "1"; }
   }
 
   /* ---------- Getting There: FAA airport status + road links ---------- */
