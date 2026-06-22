@@ -25,6 +25,7 @@
     if (tab.dataset.tab === "map" && state.map) setTimeout(() => state.map.invalidateSize(), 60);
     if (tab.dataset.tab === "tickets") setTimeout(() => renderTicketChart(), 60);
     if (tab.dataset.tab === "discover") loadDiscover();
+    if (tab.dataset.tab === "media") loadMiniTv();
   }));
 
   function showTab(name) {
@@ -508,8 +509,12 @@
       [...bar.children].forEach(x => x.classList.remove("active")); b.classList.add("active");
       frame.src = tvSrc(b.dataset.yt);
     });
-    // Load first channel only when its tab/section is visible to save bandwidth.
-    if (!frame.dataset.init) { frame.src = tvSrc(CFG.tvChannels[0].yt); frame.dataset.init = "1"; }
+  }
+  // Load the first channel only when the Radio & TV tab is opened (saves bandwidth,
+  // and avoids a hidden player running in the background).
+  function loadMiniTv() {
+    const frame = $("#miniTvFrame");
+    if (frame && !frame.dataset.init) { frame.src = tvSrc(CFG.tvChannels[0].yt); frame.dataset.init = "1"; }
   }
 
   /* ---------- Getting There: FAA airport status + road links ---------- */

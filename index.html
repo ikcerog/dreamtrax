@@ -96,18 +96,10 @@
           <div id="overviewNews" class="list compact"><p class="muted loading">Loading…</p></div>
         </div>
         <div class="card">
-          <div class="card-head"><h3>📺 Mini TV Station</h3></div>
-          <div class="filters spaced" id="tvChannels"></div>
-          <div class="video-wrap"><iframe id="miniTvFrame" src="" title="DreamTrax Mini TV Station"
-            loading="lazy" frameborder="0"
-            allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+          <div class="card-head"><h3>🚗 Getting There</h3><span class="muted">Airport &amp; roads</span></div>
+          <div id="airportCard"><p class="muted loading">Loading…</p></div>
+          <div class="links" id="roadLinks"></div>
         </div>
-      </div>
-
-      <div class="card">
-        <div class="card-head"><h3>🚗 Getting There</h3><span class="muted">Airport &amp; roads</span></div>
-        <div id="airportCard"><p class="muted loading">Loading…</p></div>
-        <div class="links" id="roadLinks"></div>
       </div>
     </section>
 
@@ -210,15 +202,13 @@
     <section id="media" class="panel">
       <div class="grid two">
         <div class="card">
-          <div class="card-head"><h3>📻 Sorcerer Radio</h3></div>
-          <p class="muted">Streaming Disney park music &amp; resort area loops. Press play.</p>
-          <audio id="radio" controls preload="none" crossorigin="anonymous" style="width:100%">
-            <source src="https://streamdb3web.securenetsystems.net/v5/SORCERER" type="audio/mpeg" />
-          </audio>
-          <p class="credit">Audio © Sorcerer Radio. Streamed via their public webcast.</p>
-          <div class="links">
-            <a class="chip" href="https://www.sorcererradio.com/" target="_blank" rel="noopener">Sorcerer Radio ↗</a>
-          </div>
+          <div class="card-head"><h3>📺 Mini TV Station</h3><span class="muted">Public domain</span></div>
+          <p class="muted">A looping in-room-style info station. Switch channels below.</p>
+          <div class="filters spaced" id="tvChannels"></div>
+          <div class="video-wrap"><iframe id="miniTvFrame" src="" title="DreamTrax Mini TV Station"
+            loading="lazy" frameborder="0"
+            allow="autoplay; encrypted-media; picture-in-picture" allowfullscreen></iframe></div>
+          <p class="credit">Channels are public-domain or creator-credited. Steamboat Willie (1928) is public domain; Resort TV courtesy of WDW Today.</p>
         </div>
         <div class="card">
           <div class="card-head"><h3>📺 Resort TV Info Channel</h3></div>

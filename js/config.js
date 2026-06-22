@@ -119,8 +119,12 @@ window.DREAMTRAX = {
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
 
-  version: "1.5.0",
+  version: "1.5.1",
   patchNotes: [
+    { v: "1.5.1", date: "2026-06-22", notes: [
+      "Moved Mini TV Station to the Radio & TV tab; retired the non-working radio player",
+      "Overview row now ends with the Getting There card",
+    ]},
     { v: "1.5.0", date: "2026-06-22", notes: [
       "Weather now follows the resort toggle (Orlando ↔ Anaheim)",
       "Overview expanded to three columns: + Crowd Forecast, Mini TV Station, Getting There",
