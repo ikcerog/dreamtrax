@@ -156,6 +156,27 @@ main { padding: 18px clamp(16px, 4vw, 40px) 40px; }
 .links { margin-top: 10px; }
 .chip { display: inline-block; background: var(--card-2); border: 1px solid var(--border); padding: 6px 12px; border-radius: 999px; font-size: 12px; font-weight: 600; }
 
+/* Trend badges (Park Pulse) */
+.trend { font-size: 11px; font-weight: 700; padding: 1px 7px; border-radius: 999px; margin-left: 6px; white-space: nowrap; }
+.trend.up { color: var(--bad); background: color-mix(in srgb, var(--bad) 16%, transparent); }
+.trend.down { color: var(--good); background: color-mix(in srgb, var(--good) 16%, transparent); }
+.trend.flat { color: var(--muted); background: color-mix(in srgb, var(--muted) 16%, transparent); }
+
+.pulse-row { display: grid; grid-template-columns: 64px 1fr auto; align-items: center; gap: 12px; padding: 8px 0; border-bottom: 1px solid var(--border); }
+.pulse-row:last-child { border-bottom: none; }
+.pulse-name { font-weight: 700; font-size: 13px; }
+.pulse-bar { height: 8px; border-radius: 999px; background: var(--card-2); overflow: hidden; }
+.pulse-bar i { display: block; height: 100%; border-radius: 999px; transition: width .5s ease; }
+.pulse-meta { font-size: 12px; color: var(--muted); white-space: nowrap; }
+
+/* Weather */
+.wx-now { display: flex; align-items: center; gap: 14px; margin-bottom: 12px; }
+.wx-emoji { font-size: 44px; line-height: 1; }
+.wx-temp { font-size: 30px; font-weight: 800; }
+.wx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
+.golden { font-size: 13px; line-height: 1.7; border-top: 1px solid var(--border); padding-top: 10px; }
+.golden b { color: var(--text); }
+
 .footer { padding: 24px clamp(16px, 4vw, 40px) 40px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; line-height: 1.6; }
 
 @media (max-width: 640px) {

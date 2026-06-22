@@ -10,8 +10,13 @@ A live, interactive **Walt Disney World** dashboard — ride wait times, an inte
 - **Interactive park map** (Leaflet + OpenStreetMap/CARTO tiles). Click a park to jump to its live waits.
 - **Disney news wire** aggregating Disney Parks Blog, AllEars, and WDW News Today / WDWNT RSS feeds, filterable by source.
 - **Overview** tab with at-a-glance stats: parks open, average wait, shortest & longest standby right now.
+- **💓 Park Pulse** *(original)* — DreamTrax snapshots wait times locally on every refresh, so it can show whether each ride's line is **▲ rising / ▼ falling** and gauge each park's live **crowd momentum** — no paid or historical API needed.
+- **🌤️ Weather & Golden Hour** *(original)* — current resort conditions plus **sunrise/sunset golden-hour windows** for park photographers, via the free, key-less [Open-Meteo](https://open-meteo.com) API.
 - **Sorcerer Radio** stream and the **Resort TV info channel** (replica courtesy of WDW Today).
 - **Light/dark theme**, auto-refresh every 5 minutes, Orlando local clock.
+
+### Why the news wire is robust
+Rather than depending on one RSS-to-JSON service (which rate-limits), DreamTrax fetches each feed's **raw XML through a fallback chain of free CORS proxies** and parses it in-browser (`DOMParser`, RSS + Atom). If one proxy is down or throttled, it automatically tries the next.
 
 ## 🧱 Tech / sources (all free & open-source)
 
@@ -19,7 +24,8 @@ A live, interactive **Walt Disney World** dashboard — ride wait times, an inte
 |----------------|---------------|
 | Map            | [Leaflet](https://leafletjs.com) + CARTO/OSM tiles |
 | Wait times     | [queue-times.com](https://queue-times.com) JSON API |
-| News           | RSS via [rss2json](https://rss2json.com) (free, no key) |
+| News           | Raw RSS/Atom via a fallback chain of free CORS proxies, parsed in-browser |
+| Weather        | [Open-Meteo](https://open-meteo.com) (free, no key) |
 | Radio          | Sorcerer Radio public webcast |
 | Resort TV      | YouTube embed (credit: WDW Today) |
 | Fonts          | Inter (Google Fonts) |

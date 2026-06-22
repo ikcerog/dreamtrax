@@ -61,6 +61,52 @@
     return `${Math.round(h / 24)}d ago`;
   };
 
+  /* ---------- Park Pulse (original): local trend tracking ----------
+     We snapshot every ride's wait into localStorage on each refresh. Comparing
+     "now" to ~20-40 min ago lets us show whether a line is climbing or dropping
+     and gauge each park's momentum — no paid/historical API required. */
+  const rideKey = (r) => `${r.parkShort}|${r.name}`;
+  function loadPulse() {
+    try { return JSON.parse(localStorage.getItem("dt-pulse") || "[]"); } catch { return []; }
+  }
+  function snapshotPulse() {
+    const snaps = loadPulse();
+    const waits = {};
+    state.rides.forEach(r => { if (r.isOpen) waits[rideKey(r)] = r.wait; });
+    snaps.push({ t: Date.now(), waits });
+    while (snaps.length > CFG.pulseHistory) snaps.shift();
+    localStorage.setItem("dt-pulse", JSON.stringify(snaps));
+    state.pulse = snaps;
+  }
+  // Trend for a ride vs the oldest snapshot >=20 min old (else oldest available).
+  function rideTrend(r) {
+    const snaps = state.pulse || [];
+    if (snaps.length < 2) return 0;
+    const cutoff = Date.now() - 20 * 60000;
+    const past = snaps.find(s => s.t <= cutoff) || snaps[0];
+    const prev = past.waits[rideKey(r)];
+    if (prev == null || !r.isOpen) return 0;
+    return r.wait - prev; // minutes change
+  }
+  function trendBadge(delta) {
+    if (!delta) return "";
+    const up = delta > 0;
+    return `<span class="trend ${up ? "up" : "down"}" title="${up ? "Rising" : "Falling"} ${Math.abs(delta)} min in ~20 min">${up ? "▲" : "▼"} ${Math.abs(delta)}</span>`;
+  }
+  // Per-park momentum: avg wait now vs ~20 min ago + crowd label from avg wait.
+  function parkPulse(short) {
+    const rides = state.rides.filter(r => r.parkShort === short && r.isOpen);
+    if (!rides.length) return null;
+    const avg = rides.reduce((s, r) => s + r.wait, 0) / rides.length;
+    const deltas = rides.map(rideTrend).filter(d => d !== 0);
+    const momentum = deltas.length ? deltas.reduce((s, d) => s + d, 0) / deltas.length : 0;
+    const level = avg <= 20 ? { t: "Low", c: "var(--good)", p: 25 }
+                : avg <= 35 ? { t: "Moderate", c: "var(--warn)", p: 55 }
+                : avg <= 55 ? { t: "Busy", c: "#fb923c", p: 80 }
+                : { t: "Packed", c: "var(--bad)", p: 100 };
+    return { avg: Math.round(avg), level, momentum, open: rides.length };
+  }
+
   /* ---------- Wait times ---------- */
   async function loadWaits() {
     const all = [];
@@ -86,8 +132,10 @@
       }
     }));
     state.rides = all;
+    snapshotPulse();
     renderWaits();
     renderOverviewStats();
+    renderParkPulse();
     renderParkMarkers();
   }
 
@@ -119,9 +167,28 @@
     const cls = waitClass(r.wait, r.isOpen);
     const badge = r.isOpen ? `${r.wait}<small> min</small>` : "Closed";
     return `<div class="ride-row">
-      <div><div class="name">${esc(r.name)}</div>
+      <div><div class="name">${esc(r.name)} ${trendBadge(rideTrend(r))}</div>
       <div class="park"><span style="color:${r.parkColor}">●</span> ${esc(r.park)}</div></div>
       <div class="wait-badge ${cls}">${badge}</div></div>`;
+  }
+
+  function renderParkPulse() {
+    const wrap = $("#parkPulse");
+    if (!wrap) return;
+    const rows = CFG.parks.map(p => {
+      const pulse = parkPulse(p.short);
+      if (!pulse) return `<div class="pulse-row"><span class="pulse-name">${esc(p.name)}</span>
+        <span class="muted">Closed</span></div>`;
+      const arrow = pulse.momentum > 1 ? `<span class="trend up">▲ rising</span>`
+                  : pulse.momentum < -1 ? `<span class="trend down">▼ easing</span>`
+                  : `<span class="trend flat">▬ steady</span>`;
+      return `<div class="pulse-row">
+        <span class="pulse-name"><span style="color:${p.color}">●</span> ${esc(p.short)}</span>
+        <div class="pulse-bar"><i style="width:${pulse.level.p}%;background:${pulse.level.c}"></i></div>
+        <span class="pulse-meta"><b style="color:${pulse.level.c}">${pulse.level.t}</b> · ${pulse.avg}m ${arrow}</span>
+      </div>`;
+    }).join("");
+    wrap.innerHTML = rows;
   }
 
   function renderWaits() {
@@ -155,25 +222,53 @@
       : `<p class="muted">Wait times unavailable right now.</p>`;
   }
 
-  /* ---------- News ---------- */
-  async function loadNews() {
-    const items = [];
-    await Promise.all(CFG.news.map(async (src) => {
+  /* ---------- News ----------
+     Robust: fetch the raw RSS/Atom XML through a fallback chain of free CORS
+     proxies, then parse in-browser. If one proxy is rate-limited/down we move
+     to the next, so a single flaky proxy no longer blanks the whole wire. */
+  async function fetchFeedText(feedUrl) {
+    for (const proxy of CFG.corsProxies) {
       try {
-        const res = await fetch(CFG.rssProxy(src.url));
-        const data = await res.json();
-        if (data.status !== "ok") throw new Error(data.message || "rss error");
-        (data.items || []).forEach(it => items.push({
-          source: src.name,
-          title: it.title,
-          link: it.link,
-          date: it.pubDate,
-          snippet: (it.description || "").replace(/<[^>]+>/g, "").slice(0, 180),
-        }));
-      } catch (e) {
-        console.warn(`News failed for ${src.name}:`, e.message);
-      }
+        const res = await fetch(proxy(feedUrl), { headers: { Accept: "application/rss+xml, application/xml, text/xml, */*" } });
+        if (!res.ok) continue;
+        const text = await res.text();
+        if (text && /<(rss|feed|rdf:RDF)/i.test(text)) return text;
+      } catch { /* try next proxy */ }
+    }
+    return null;
+  }
+
+  function parseFeed(xmlText, sourceName) {
+    const doc = new DOMParser().parseFromString(xmlText, "text/xml");
+    if (doc.querySelector("parsererror")) return [];
+    const txt = (el, sel) => el.querySelector(sel)?.textContent?.trim() || "";
+    // RSS <item> first, fall back to Atom <entry>.
+    const nodes = [...doc.querySelectorAll("item")];
+    if (nodes.length) {
+      return nodes.map(n => ({
+        source: sourceName,
+        title: txt(n, "title"),
+        link: txt(n, "link"),
+        date: txt(n, "pubDate") || txt(n, "date"),
+        snippet: (txt(n, "description")).replace(/<[^>]+>/g, "").slice(0, 180),
+      }));
+    }
+    return [...doc.querySelectorAll("entry")].map(n => ({
+      source: sourceName,
+      title: txt(n, "title"),
+      link: n.querySelector("link")?.getAttribute("href") || txt(n, "link"),
+      date: txt(n, "updated") || txt(n, "published"),
+      snippet: (txt(n, "summary") || txt(n, "content")).replace(/<[^>]+>/g, "").slice(0, 180),
     }));
+  }
+
+  async function loadNews() {
+    const batches = await Promise.all(CFG.news.map(async (src) => {
+      const xml = await fetchFeedText(src.url);
+      if (!xml) { console.warn(`News: all proxies failed for ${src.name}`); return []; }
+      return parseFeed(xml, src.name).filter(i => i.title && i.link);
+    }));
+    const items = batches.flat();
     items.sort((a, b) => new Date(b.date) - new Date(a.date));
     state.news = items;
     renderNews();
@@ -247,11 +342,55 @@
   }
   window.__dtJump = (short) => { state.parkFilter = short; renderWaits(); showTab("waits"); };
 
+  /* ---------- Weather & Golden Hour (Open-Meteo, free / no key) ---------- */
+  const WMO = {
+    0:["Clear","☀️"],1:["Mainly clear","🌤️"],2:["Partly cloudy","⛅"],3:["Overcast","☁️"],
+    45:["Fog","🌫️"],48:["Rime fog","🌫️"],51:["Light drizzle","🌦️"],53:["Drizzle","🌦️"],55:["Heavy drizzle","🌧️"],
+    61:["Light rain","🌦️"],63:["Rain","🌧️"],65:["Heavy rain","🌧️"],
+    71:["Light snow","🌨️"],73:["Snow","🌨️"],75:["Heavy snow","❄️"],
+    80:["Showers","🌦️"],81:["Showers","🌧️"],82:["Violent showers","⛈️"],
+    95:["Thunderstorm","⛈️"],96:["Storm + hail","⛈️"],99:["Severe storm","⛈️"],
+  };
+  const fmtTime = (iso) => new Date(iso).toLocaleTimeString("en-US", { timeZone: "America/New_York", hour: "numeric", minute: "2-digit" });
+  const addHr = (iso, h) => fmtTime(new Date(new Date(iso).getTime() + h * 3600000).toISOString());
+
+  async function loadWeather() {
+    const el = $("#weatherCard");
+    if (!el) return;
+    try {
+      const res = await fetch(CFG.weather.url());
+      const d = await res.json();
+      const c = d.current, day = d.daily;
+      const [desc, emoji] = WMO[c.weather_code] || ["—","🌡️"];
+      const rise = day.sunrise[0], set = day.sunset[0];
+      // Golden hour ≈ first hour after sunrise and last hour before sunset.
+      el.innerHTML = `
+        <div class="wx-now">
+          <span class="wx-emoji">${emoji}</span>
+          <div><div class="wx-temp">${Math.round(c.temperature_2m)}°F</div>
+          <div class="muted">${desc} · feels ${Math.round(c.apparent_temperature)}°</div></div>
+        </div>
+        <div class="wx-grid">
+          <span>💧 ${c.relative_humidity_2m}% hum</span>
+          <span>🌧️ ${day.precipitation_probability_max[0]}% rain</span>
+          <span>💨 ${Math.round(c.wind_speed_10m)} mph</span>
+          <span>🔆 UV ${Math.round(day.uv_index_max[0])}</span>
+        </div>
+        <div class="golden">
+          <div>🌅 <b>Sunrise</b> ${fmtTime(rise)} <span class="muted">· golden ${fmtTime(rise)}–${addHr(rise,1)}</span></div>
+          <div>🌇 <b>Sunset</b> ${fmtTime(set)} <span class="muted">· golden ${addHr(set,-1)}–${fmtTime(set)}</span></div>
+        </div>`;
+    } catch (e) {
+      console.warn("Weather failed:", e.message);
+      el.innerHTML = `<p class="muted">Weather temporarily unavailable.</p>`;
+    }
+  }
+
   /* ---------- Refresh orchestration ---------- */
   async function refreshAll() {
     const btn = $("#refreshBtn");
     btn.disabled = true; btn.textContent = "↻ Loading…";
-    await Promise.all([loadWaits(), loadNews()]);
+    await Promise.all([loadWaits(), loadNews(), loadWeather()]);
     state.fetchedAt = new Date();
     $("#lastUpdated").textContent = state.fetchedAt.toLocaleString("en-US", { timeZone: "America/New_York" }) + " ET";
     btn.disabled = false; btn.textContent = "↻ Refresh";
