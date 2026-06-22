@@ -80,11 +80,34 @@ window.DREAMTRAX = {
     disclaimer: "Ticket prices model Disney's published date-based pricing structure and are illustrative estimates for trend visualization — not official quotes. Always confirm at disneyworld.disney.go.com / disneyland.disney.go.com. DreamTrax records each day's value locally so the history becomes real over time.",
   },
 
+  // Discover tab — free, royalty-free, public-domain sources (no keys, CORS-OK).
+  discover: {
+    // Wikipedia article titles per park (CC BY-SA text + Commons thumbnails).
+    wiki: {
+      MK: "Magic Kingdom", EP: "Epcot", HS: "Disney's Hollywood Studios",
+      AK: "Disney's Animal Kingdom", DL: "Disneyland", DCA: "Disney California Adventure",
+    },
+    wikiSummary: (title) => `https://en.wikipedia.org/api/rest_v1/page/summary/${encodeURIComponent(title)}`,
+    // Wikimedia Commons "Picture of the day" style feed — freely-licensed media.
+    commonsSearch: (q) =>
+      `https://commons.wikimedia.org/w/api.php?action=query&format=json&origin=*&generator=search` +
+      `&gsrsearch=${encodeURIComponent(q)}&gsrnamespace=6&gsrlimit=8&prop=imageinfo` +
+      `&iiprop=url|extmetadata&iiurlwidth=480`,
+    // Internet Archive: Steamboat Willie (1928) — public domain since 2024-01-01.
+    archiveItem: "SteamboatWillie",
+    archiveCollectionUrl: "https://archive.org/details/disney",
+  },
+
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
 
-  version: "1.3.0",
+  version: "1.4.0",
   patchNotes: [
+    { v: "1.4.0", date: "2026-06-22", notes: [
+      "New Discover tab: Park Encyclopedia via Wikipedia + Wikimedia Commons photos",
+      "Vintage Vault: public-domain Steamboat Willie (1928) via the Internet Archive",
+      "Fonts: Raleway (sans) + Merriweather (serif headings)",
+    ]},
     { v: "1.3.0", date: "2026-06-22", notes: [
       "Park IDs now resolved live from queue-times to fix Disneyland/DCA showing closed",
       "Overview resort toggle (All / Walt Disney World / Disneyland)",

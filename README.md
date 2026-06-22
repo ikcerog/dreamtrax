@@ -14,6 +14,7 @@ A live, interactive **Walt Disney World** dashboard — ride wait times, an inte
 - **🌤️ Weather & Golden Hour** *(original)* — current resort conditions plus **sunrise/sunset golden-hour windows** for park photographers, via the free, key-less [Open-Meteo](https://open-meteo.com) API.
 - **🎟️ Ticket price trends** — interactive [Chart.js](https://www.chartjs.org) line graph of 1-Day base ticket prices with **7/30/60/90-day** ranges and a **14-day pricing calendar** (Value/Regular/Peak tiers). No free Disney price API exists, so DreamTrax models Disney's published date-based pricing as an *illustrative* series and **self-records each day's value to `localStorage`** so the history becomes real over time (override via `window.DREAMTRAX_TICKETS`).
 - **🔎 Self-verifying sources** — park IDs are resolved at runtime from queue-times' own `parks.json` by name, so the dashboard can't break on ID drift (this is what fixed Disneyland/DCA showing closed).
+- **🏰 Discover tab** — a **Park Encyclopedia** (live Wikipedia REST summaries + Wikimedia Commons thumbnails for all six parks), a **freely-licensed Commons photo stream** (each image links to its source & license), and a **Vintage Vault** embedding the public-domain *Steamboat Willie* (1928) from the Internet Archive. All free, royalty-free, no keys, fully attributed.
 - **Version chip** with in-app **patch notes**, and an **All / WDW / Disneyland** resort toggle on the Overview.
 - **Sorcerer Radio** stream and the **Resort TV info channel** (replica courtesy of WDW Today).
 - **Light/dark theme**, auto-refresh every 5 minutes, Orlando local clock.
@@ -29,6 +30,8 @@ Rather than depending on one RSS-to-JSON service (which rate-limits), DreamTrax 
 | Wait times     | [queue-times.com](https://queue-times.com) JSON API |
 | News           | Raw RSS/Atom via a fallback chain of free CORS proxies, parsed in-browser |
 | Weather        | [Open-Meteo](https://open-meteo.com) (free, no key) |
+| Encyclopedia   | [Wikipedia REST API](https://en.wikipedia.org/api/rest_v1/) + [Wikimedia Commons](https://commons.wikimedia.org) (CC BY-SA) |
+| Vintage media  | [Internet Archive](https://archive.org) (public domain) |
 | Radio          | Sorcerer Radio public webcast |
 | Resort TV      | YouTube embed (credit: WDW Today) |
 | Charts         | [Chart.js](https://www.chartjs.org) |

@@ -24,6 +24,7 @@
     $("#" + tab.dataset.tab).classList.add("active");
     if (tab.dataset.tab === "map" && state.map) setTimeout(() => state.map.invalidateSize(), 60);
     if (tab.dataset.tab === "tickets") setTimeout(() => renderTicketChart(), 60);
+    if (tab.dataset.tab === "discover") loadDiscover();
   }));
 
   function showTab(name) {
@@ -558,6 +559,57 @@
     rg.addEventListener("click", e => { const b = e.target.closest(".pill"); if (!b) return;
       tk.range = +b.dataset.n; [...rg.children].forEach(c => c.classList.toggle("active", +c.dataset.n === tk.range)); renderTicketChart(); });
     renderTickets();
+  }
+
+  /* ---------- Discover (Wikipedia / Commons / Internet Archive) ---------- */
+  let discoverLoaded = false;
+  async function loadDiscover() {
+    if (discoverLoaded) return;
+    discoverLoaded = true;
+    const D = CFG.discover;
+
+    // Internet Archive — public-domain Steamboat Willie.
+    $("#archiveFrame").src = `https://archive.org/embed/${D.archiveItem}`;
+    $("#archiveLink").href = `https://archive.org/details/${D.archiveItem}`;
+
+    // Park Encyclopedia — Wikipedia REST summaries.
+    const enc = $("#encyclopedia");
+    enc.innerHTML = CFG.parks.map(p =>
+      `<div class="enc-card" id="enc-${p.short}"><div class="enc-body"><p class="muted loading">Loading ${esc(p.name)}…</p></div></div>`).join("");
+    await Promise.all(CFG.parks.map(async (p) => {
+      try {
+        const res = await fetch(D.wikiSummary(D.wiki[p.short] || p.name));
+        const d = await res.json();
+        const img = d.thumbnail?.source;
+        const link = d.content_urls?.desktop?.page || `https://en.wikipedia.org/wiki/${encodeURIComponent(D.wiki[p.short] || p.name)}`;
+        $("#enc-" + p.short).innerHTML =
+          `${img ? `<div class="enc-img" style="background-image:url('${img}')"></div>` : ""}
+           <div class="enc-body"><h4><span style="color:${p.color}">●</span> ${esc(d.title || p.name)}</h4>
+           <p>${esc(d.extract || "Summary unavailable.")}</p>
+           <a class="chip" href="${link}" target="_blank" rel="noopener">Read on Wikipedia ↗</a></div>`;
+      } catch {
+        $("#enc-" + p.short).innerHTML = `<div class="enc-body"><h4>${esc(p.name)}</h4><p class="muted">Info temporarily unavailable.</p></div>`;
+      }
+    }));
+
+    // Wikimedia Commons — freely-licensed photo stream.
+    try {
+      const res = await fetch(D.commonsSearch("Magic Kingdom castle Walt Disney World"));
+      const data = await res.json();
+      const pages = Object.values(data?.query?.pages || {})
+        .filter(pg => pg.imageinfo?.[0]?.thumburl)
+        .slice(0, 8);
+      $("#commonsGrid").innerHTML = pages.length ? pages.map(pg => {
+        const ii = pg.imageinfo[0];
+        const meta = ii.extmetadata || {};
+        const artist = (meta.Artist?.value || "Wikimedia Commons").replace(/<[^>]+>/g, "");
+        const lic = meta.LicenseShortName?.value || "free license";
+        return `<a class="commons-cell" href="${ii.descriptionurl}" target="_blank" rel="noopener"
+          title="${esc(artist)} · ${esc(lic)}" style="background-image:url('${ii.thumburl}')"></a>`;
+      }).join("") : `<p class="muted">No photos returned right now.</p>`;
+    } catch {
+      $("#commonsGrid").innerHTML = `<p class="muted">Photo stream temporarily unavailable.</p>`;
+    }
   }
 
   /* ---------- Overview resort toggle ---------- */

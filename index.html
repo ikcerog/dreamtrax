@@ -39,6 +39,7 @@
     <button class="tab" data-tab="waits" role="tab">Wait Times</button>
     <button class="tab" data-tab="map" role="tab">Park Map</button>
     <button class="tab" data-tab="tickets" role="tab">Tickets</button>
+    <button class="tab" data-tab="discover" role="tab">Discover</button>
     <button class="tab" data-tab="news" role="tab">News</button>
     <button class="tab" data-tab="media" role="tab">Radio &amp; TV</button>
   </nav>
@@ -142,6 +143,37 @@
       </div>
       <div class="card">
         <p class="muted" id="ticketDisclaimer"></p>
+      </div>
+    </section>
+
+    <!-- DISCOVER -->
+    <section id="discover" class="panel">
+      <div class="card">
+        <div class="card-head"><h3>🏰 Park Encyclopedia</h3>
+          <span class="muted">Live from Wikipedia &amp; Wikimedia Commons</span></div>
+        <div id="encyclopedia" class="enc-grid"><p class="muted loading">Open to load…</p></div>
+      </div>
+
+      <div class="grid two">
+        <div class="card">
+          <div class="card-head"><h3>📽️ Vintage Vault</h3>
+            <span class="muted">Public domain</span></div>
+          <p class="muted">“Steamboat Willie” (1928) entered the public domain on January 1, 2024. Streamed from the Internet Archive.</p>
+          <div class="video-wrap">
+            <iframe id="archiveFrame" src="" title="Steamboat Willie (1928, public domain)"
+              loading="lazy" frameborder="0" allowfullscreen webkitallowfullscreen="true" mozallowfullscreen="true"></iframe>
+          </div>
+          <p class="credit">Source: <a id="archiveLink" href="#" target="_blank" rel="noopener">Internet Archive</a> · Public domain.</p>
+        </div>
+        <div class="card">
+          <div class="card-head"><h3>📷 Free Photo Stream</h3>
+            <span class="muted">Wikimedia Commons</span></div>
+          <p class="muted">Freely-licensed Disney park photography. Click any image for its source &amp; license.</p>
+          <div id="commonsGrid" class="commons-grid"><p class="muted loading">Open to load…</p></div>
+        </div>
+      </div>
+      <div class="card">
+        <p class="muted">Encyclopedia text is licensed CC BY-SA via Wikipedia. Photos are hosted on Wikimedia Commons under their individual free licenses — open each image for attribution. Vintage media is public domain via the Internet Archive.</p>
       </div>
     </section>
 
