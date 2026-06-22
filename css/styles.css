@@ -13,6 +13,8 @@
   --border: #243156;
   --shadow: 0 10px 30px rgba(0, 0, 0, .35);
   --radius: 16px;
+  --sans: 'Raleway', system-ui, -apple-system, sans-serif;
+  --serif: 'Merriweather', Georgia, 'Times New Roman', serif;
 }
 [data-theme="light"] {
   --bg: #eef2fb;
@@ -28,7 +30,7 @@
 * { box-sizing: border-box; }
 html, body { margin: 0; }
 body {
-  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  font-family: var(--sans);
   background: radial-gradient(1200px 600px at 80% -10%, rgba(180,107,255,.18), transparent),
               radial-gradient(1000px 500px at 0% 0%, rgba(91,140,255,.18), transparent),
               var(--bg);
@@ -53,6 +55,7 @@ a:hover { text-decoration: underline; }
   border-radius: 14px; background: linear-gradient(135deg, var(--accent), var(--accent-2));
   box-shadow: var(--shadow); color: #fff;
 }
+.brand h1, .card-head h3, .modal-card h3, .news-item h4 { font-family: var(--serif); }
 .brand h1 { font-size: 22px; margin: 0; letter-spacing: .3px; }
 .tagline { margin: 0; font-size: 12px; color: var(--muted); }
 .topbar-actions { display: flex; align-items: center; gap: 10px; }
@@ -176,6 +179,30 @@ main { padding: 18px clamp(16px, 4vw, 40px) 40px; }
 .wx-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; font-size: 13px; color: var(--muted); margin-bottom: 12px; }
 .golden { font-size: 13px; line-height: 1.7; border-top: 1px solid var(--border); padding-top: 10px; }
 .golden b { color: var(--text); }
+
+.filters.spaced { margin-bottom: 14px; }
+
+/* Version chip + modal */
+.chip-btn {
+  background: linear-gradient(135deg, var(--accent), var(--accent-2)); color: #fff; border: none;
+  padding: 7px 12px; border-radius: 999px; font-weight: 700; font-size: 12px; cursor: pointer;
+  font-variant-numeric: tabular-nums;
+}
+.chip-btn:hover { filter: brightness(1.08); }
+.modal {
+  position: fixed; inset: 0; z-index: 60; display: none; align-items: center; justify-content: center;
+  background: rgba(5, 8, 18, .6); backdrop-filter: blur(4px); padding: 20px;
+}
+.modal.open { display: flex; animation: fade .2s ease; }
+.modal-card { background: var(--card); border: 1px solid var(--border); border-radius: var(--radius); box-shadow: var(--shadow); padding: 20px; max-width: 520px; width: 100%; max-height: 80vh; overflow: auto; }
+.notes .note-block { padding: 10px 0; border-bottom: 1px solid var(--border); }
+.notes .note-block:last-child { border-bottom: none; }
+.note-head { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 4px; }
+.notes ul { margin: 0; padding-left: 18px; }
+.notes li { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+/* Tickets */
+.chart-wrap { position: relative; height: 320px; margin-top: 6px; }
 
 .footer { padding: 24px clamp(16px, 4vw, 40px) 40px; border-top: 1px solid var(--border); color: var(--muted); font-size: 12px; line-height: 1.6; }
 

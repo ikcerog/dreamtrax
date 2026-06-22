@@ -1,15 +1,19 @@
 /* DreamTrax configuration — edit sources here. */
 window.DREAMTRAX = {
-  // queue-times.com park IDs. Two resorts; live data for whichever is open.
+  // Parks. IDs below are sensible fallbacks, but DreamTrax resolves the real
+  // queue-times ID at runtime from parks.json by matching name (+ company, to
+  // disambiguate the two "Disneyland Park"s in Anaheim vs Paris). This keeps the
+  // sources verified and immune to ID changes.
+  parksIndexUrl: "https://queue-times.com/parks.json",
   parks: [
     // Walt Disney World Resort (Florida / Eastern time)
-    { id: 6, name: "Magic Kingdom",          short: "MK",  resort: "WDW", lat: 28.4177, lng: -81.5812, color: "#5b8cff" },
-    { id: 5, name: "EPCOT",                   short: "EP",  resort: "WDW", lat: 28.3747, lng: -81.5494, color: "#b46bff" },
-    { id: 7, name: "Hollywood Studios",       short: "HS",  resort: "WDW", lat: 28.3575, lng: -81.5601, color: "#34d399" },
-    { id: 8, name: "Animal Kingdom",          short: "AK",  resort: "WDW", lat: 28.3553, lng: -81.5901, color: "#fbbf24" },
+    { id: 6,  short: "MK",  resort: "WDW", name: "Magic Kingdom",      nameMatch: "magic kingdom",       companyMatch: "walt disney world", lat: 28.4177, lng: -81.5812, color: "#5b8cff" },
+    { id: 5,  short: "EP",  resort: "WDW", name: "EPCOT",              nameMatch: "epcot",               companyMatch: "walt disney world", lat: 28.3747, lng: -81.5494, color: "#b46bff" },
+    { id: 7,  short: "HS",  resort: "WDW", name: "Hollywood Studios",  nameMatch: "hollywood studios",   companyMatch: "walt disney world", lat: 28.3575, lng: -81.5601, color: "#34d399" },
+    { id: 8,  short: "AK",  resort: "WDW", name: "Animal Kingdom",     nameMatch: "animal kingdom",      companyMatch: "walt disney world", lat: 28.3553, lng: -81.5901, color: "#fbbf24" },
     // Disneyland Resort (California / Pacific time)
-    { id: 16, name: "Disneyland Park",        short: "DL",  resort: "DLR", lat: 33.8121, lng: -117.9190, color: "#f472b6" },
-    { id: 17, name: "California Adventure",    short: "DCA", resort: "DLR", lat: 33.8060, lng: -117.9221, color: "#38bdf8" },
+    { id: 16, short: "DL",  resort: "DLR", name: "Disneyland Park",    nameMatch: "disneyland park",     companyMatch: "disneyland resort", lat: 33.8121, lng: -117.9190, color: "#f472b6" },
+    { id: 17, short: "DCA", resort: "DLR", name: "California Adventure", nameMatch: "california adventure", companyMatch: "disneyland resort", lat: 33.8060, lng: -117.9221, color: "#38bdf8" },
   ],
 
   // Resorts (for map focus + filtering).
@@ -57,6 +61,47 @@ window.DREAMTRAX = {
     },
   },
 
+  // Ticket pricing. No free/official Disney price API exists, so DreamTrax models
+  // Disney's published date-based pricing structure (base + weekend/seasonal tiers)
+  // as an ILLUSTRATIVE series, and self-records each day's value to localStorage so
+  // the history becomes real observations over time. Drop verified data into
+  // window.DREAMTRAX_TICKETS to override the model.
+  tickets: {
+    resorts: {
+      WDW: { label: "Walt Disney World", base: 109, color: "#5b8cff" },
+      DLR: { label: "Disneyland",        base: 104, color: "#f472b6" },
+    },
+    seasonAdd: { weekend: 25, summer: 35, holiday: 45, springBreak: 30 }, // $ adders
+    tiers: [
+      { name: "Value",   max: 130, color: "#34d399" },
+      { name: "Regular", max: 165, color: "#fbbf24" },
+      { name: "Peak",    max: 999, color: "#f87171" },
+    ],
+    disclaimer: "Ticket prices model Disney's published date-based pricing structure and are illustrative estimates for trend visualization — not official quotes. Always confirm at disneyworld.disney.go.com / disneyland.disney.go.com. DreamTrax records each day's value locally so the history becomes real over time.",
+  },
+
   pulseHistory: 12,          // wait-time snapshots kept in localStorage (~1h at 5-min refresh)
   refreshMs: 5 * 60 * 1000,  // auto-refresh live data every 5 minutes
+
+  version: "1.3.0",
+  patchNotes: [
+    { v: "1.3.0", date: "2026-06-22", notes: [
+      "Park IDs now resolved live from queue-times to fix Disneyland/DCA showing closed",
+      "Overview resort toggle (All / Walt Disney World / Disneyland)",
+      "Per-park data status: distinguishes Closed vs No live data",
+      "Version chip with these patch notes",
+    ]},
+    { v: "1.2.0", date: "2026-06-22", notes: [
+      "Added Disneyland Resort parks with live waits + map resort toggle",
+      "News switched to Google News RSS so publishers keep ad revenue",
+    ]},
+    { v: "1.1.0", date: "2026-06-22", notes: [
+      "Robust news wire: multi-proxy raw RSS/Atom parsing",
+      "Park Pulse: local wait-trend tracking + crowd momentum",
+      "Weather & Golden Hour via Open-Meteo",
+    ]},
+    { v: "1.0.0", date: "2026-06-22", notes: [
+      "Initial DreamTrax: wait times, park map, news, radio & resort TV",
+    ]},
+  ],
 };

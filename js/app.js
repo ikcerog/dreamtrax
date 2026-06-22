@@ -8,8 +8,10 @@
   const state = {
     rides: [],          // {name, wait, isOpen, park, parkColor}
     news: [],           // {source, title, link, date, snippet}
+    parkStatus: {},     // short -> {ok, total, open} so we can tell Closed vs No-data
     parkFilter: "all",
     newsFilter: "all",
+    resortFilter: "all",
     map: null,
     fetchedAt: null,
   };
@@ -21,6 +23,7 @@
     tab.classList.add("active");
     $("#" + tab.dataset.tab).classList.add("active");
     if (tab.dataset.tab === "map" && state.map) setTimeout(() => state.map.invalidateSize(), 60);
+    if (tab.dataset.tab === "tickets") setTimeout(() => renderTicketChart(), 60);
   }));
 
   function showTab(name) {
@@ -95,8 +98,9 @@
   }
   // Per-park momentum: avg wait now vs ~20 min ago + crowd label from avg wait.
   function parkPulse(short) {
+    const st = state.parkStatus[short];
     const rides = state.rides.filter(r => r.parkShort === short && r.isOpen);
-    if (!rides.length) return null;
+    if (!rides.length) return { closed: true, noData: !st || !st.ok || st.total === 0 };
     const avg = rides.reduce((s, r) => s + r.wait, 0) / rides.length;
     const deltas = rides.map(rideTrend).filter(d => d !== 0);
     const momentum = deltas.length ? deltas.reduce((s, d) => s + d, 0) / deltas.length : 0;
@@ -107,12 +111,35 @@
     return { avg: Math.round(avg), level, momentum, open: rides.length };
   }
 
+  /* ---------- Source verification: resolve real park IDs from queue-times ----------
+     Avoids hardcoded-ID drift (e.g. the two "Disneyland Park"s in Anaheim vs Paris)
+     by matching each configured park against queue-times' own parks.json. */
+  async function resolveParkIds() {
+    try {
+      const res = await fetch(CFG.parksIndexUrl);
+      const companies = await res.json();
+      const flat = [];
+      companies.forEach(c => (c.parks || []).forEach(p =>
+        flat.push({ company: (c.name || "").toLowerCase(), name: (p.name || "").toLowerCase(), id: p.id })));
+      CFG.parks.forEach(cp => {
+        const m = flat.find(f => f.name.includes(cp.nameMatch) &&
+          (!cp.companyMatch || f.company.includes(cp.companyMatch)));
+        cp.resolvedId = m ? m.id : cp.id;
+      });
+      console.info("DreamTrax resolved park IDs:", CFG.parks.map(p => `${p.short}=${p.resolvedId}`).join(" "));
+    } catch (e) {
+      console.warn("Park-index resolve failed, using fallback IDs:", e.message);
+      CFG.parks.forEach(cp => { cp.resolvedId = cp.id; });
+    }
+  }
+
   /* ---------- Wait times ---------- */
   async function loadWaits() {
     const all = [];
+    state.parkStatus = {};
     await Promise.all(CFG.parks.map(async (park) => {
       try {
-        const res = await fetch(CFG.queueApi(park.id));
+        const res = await fetch(CFG.queueApi(park.resolvedId ?? park.id));
         if (!res.ok) throw new Error(res.status);
         const data = await res.json();
         const rides = [
@@ -127,8 +154,10 @@
           parkShort: park.short,
           parkColor: park.color,
         }));
+        state.parkStatus[park.short] = { ok: true, total: rides.length, open: rides.filter(r => r.is_open).length };
       } catch (e) {
         console.warn(`Wait times failed for ${park.name}:`, e.message);
+        state.parkStatus[park.short] = { ok: false, total: 0, open: 0 };
       }
     }));
     state.rides = all;
@@ -175,10 +204,11 @@
   function renderParkPulse() {
     const wrap = $("#parkPulse");
     if (!wrap) return;
-    const rows = CFG.parks.map(p => {
+    const parks = CFG.parks.filter(p => state.resortFilter === "all" || p.resort === state.resortFilter);
+    const rows = parks.map(p => {
       const pulse = parkPulse(p.short);
-      if (!pulse) return `<div class="pulse-row"><span class="pulse-name">${esc(p.name)}</span>
-        <span class="muted">Closed</span></div>`;
+      if (pulse.closed) return `<div class="pulse-row"><span class="pulse-name"><span style="color:${p.color}">●</span> ${esc(p.short)}</span>
+        <span class="muted">${pulse.noData ? "No live data" : "Closed"}</span><span></span></div>`;
       const arrow = pulse.momentum > 1 ? `<span class="trend up">▲ rising</span>`
                   : pulse.momentum < -1 ? `<span class="trend down">▼ easing</span>`
                   : `<span class="trend flat">▬ steady</span>`;
@@ -199,10 +229,16 @@
       : `<p class="muted">No rides match. Live data may be temporarily unavailable.</p>`;
   }
 
+  function inResort(r) {
+    if (state.resortFilter === "all") return true;
+    const p = CFG.parks.find(x => x.short === r.parkShort);
+    return p && p.resort === state.resortFilter;
+  }
   function renderOverviewStats() {
-    const open = state.rides.filter(r => r.isOpen);
+    const open = state.rides.filter(r => r.isOpen && inResort(r));
+    const totalParks = CFG.parks.filter(p => state.resortFilter === "all" || p.resort === state.resortFilter).length;
     const openParks = new Set(open.map(r => r.park));
-    $("#statParks").textContent = `${openParks.size}/${CFG.parks.length}`;
+    $("#statParks").textContent = `${openParks.size}/${totalParks}`;
     if (open.length) {
       const avg = Math.round(open.reduce((s, r) => s + r.wait, 0) / open.length);
       $("#statAvg").textContent = `${avg} min`;
@@ -423,12 +459,147 @@
     btn.disabled = false; btn.textContent = "↻ Refresh";
   }
 
+  /* ---------- Ticket prices (modeled + self-recording) ---------- */
+  const tk = { resort: "WDW", range: 90, chart: null };
+  const isoDay = (d) => d.toISOString().slice(0, 10);
+  function seeded(str) { // deterministic 0..1 from a string
+    let h = 2166136261;
+    for (let i = 0; i < str.length; i++) { h ^= str.charCodeAt(i); h = Math.imul(h, 16777619); }
+    return ((h >>> 0) % 1000) / 1000;
+  }
+  function ticketPrice(dateStr, resort) {
+    const T = CFG.tickets, R = T.resorts[resort];
+    const d = new Date(dateStr + "T12:00:00"), dow = d.getDay(), mo = d.getMonth();
+    let p = R.base;
+    if (dow === 5 || dow === 6 || dow === 0) p += T.seasonAdd.weekend;
+    if (mo === 5 || mo === 6) p += T.seasonAdd.summer;       // Jun–Jul
+    if (mo === 11) p += T.seasonAdd.holiday;                  // December
+    if (mo === 2 || mo === 3) p += T.seasonAdd.springBreak;   // Mar–Apr
+    p += Math.floor(seeded(dateStr + resort) * 4) * 5;        // mild deterministic wiggle
+    return Math.round(p / 5) * 5;
+  }
+  function tierOf(price) { return CFG.tickets.tiers.find(t => price <= t.max) || CFG.tickets.tiers.at(-1); }
+  // Merge any externally-supplied real data + locally-recorded observations.
+  function ticketObservations() {
+    let obs = {};
+    try { obs = JSON.parse(localStorage.getItem("dt-ticket-obs") || "{}"); } catch {}
+    const ext = window.DREAMTRAX_TICKETS || {};
+    return { ...(ext.history || {}), ...obs };
+  }
+  function recordTicketToday() {
+    const obs = (() => { try { return JSON.parse(localStorage.getItem("dt-ticket-obs") || "{}"); } catch { return {}; } })();
+    const today = isoDay(new Date());
+    Object.keys(CFG.tickets.resorts).forEach(r => { obs[`${r}|${today}`] = ticketPrice(today, r); });
+    localStorage.setItem("dt-ticket-obs", JSON.stringify(obs));
+  }
+  function ticketSeries(resort, days) {
+    const obs = ticketObservations(), out = [];
+    for (let i = days - 1; i >= 0; i--) {
+      const d = new Date(); d.setDate(d.getDate() - i);
+      const key = `${resort}|${isoDay(d)}`;
+      out.push({ date: isoDay(d), price: obs[key] != null ? obs[key] : ticketPrice(isoDay(d), resort) });
+    }
+    return out;
+  }
+  function renderTicketChart() {
+    const canvas = $("#ticketChart"); if (!canvas || !window.Chart) return;
+    const R = CFG.tickets.resorts[tk.resort];
+    const series = ticketSeries(tk.resort, tk.range);
+    const labels = series.map(s => s.date.slice(5));
+    const data = series.map(s => s.price);
+    const prices = data.slice();
+    $("#ticketStats").textContent =
+      `${R.label} · low $${Math.min(...prices)} · high $${Math.max(...prices)} · avg $${Math.round(prices.reduce((a, b) => a + b, 0) / prices.length)} over ${tk.range}d`;
+    const css = getComputedStyle(document.body);
+    const grid = css.getPropertyValue("--border").trim(), text = css.getPropertyValue("--muted").trim();
+    if (tk.chart) tk.chart.destroy();
+    tk.chart = new Chart(canvas, {
+      type: "line",
+      data: { labels, datasets: [{
+        label: `${R.label} 1-Day base`, data,
+        borderColor: R.color, backgroundColor: R.color + "33",
+        fill: true, tension: .3, pointRadius: tk.range <= 30 ? 2 : 0, borderWidth: 2,
+      }]},
+      options: {
+        responsive: true, maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { callbacks: { label: c => ` $${c.parsed.y}` } } },
+        scales: {
+          x: { grid: { color: grid }, ticks: { color: text, maxTicksLimit: 8 } },
+          y: { grid: { color: grid }, ticks: { color: text, callback: v => "$" + v } },
+        },
+      },
+    });
+  }
+  function renderTicketCalendar() {
+    const wrap = $("#ticketCalendar"); if (!wrap) return;
+    const rows = [];
+    for (let i = 0; i < 14; i++) {
+      const d = new Date(); d.setDate(d.getDate() + i);
+      const price = ticketPrice(isoDay(d), tk.resort), tier = tierOf(price);
+      const label = d.toLocaleDateString("en-US", { weekday: "short", month: "short", day: "numeric" });
+      rows.push(`<div class="ride-row"><div><div class="name">${i === 0 ? "Today · " : ""}${label}</div>
+        <div class="park"><span style="color:${tier.color}">●</span> ${tier.name}</div></div>
+        <div class="wait-badge" style="color:${tier.color};background:${tier.color}22">$${price}</div></div>`);
+    }
+    wrap.innerHTML = rows.join("");
+  }
+  function renderTickets() { renderTicketChart(); renderTicketCalendar(); }
+  function initTickets() {
+    recordTicketToday();
+    $("#ticketDisclaimer").textContent = "ℹ️ " + CFG.tickets.disclaimer;
+    const rr = $("#ticketResort");
+    rr.innerHTML = Object.entries(CFG.tickets.resorts).map(([k, v]) =>
+      `<button class="pill ${k === tk.resort ? "active" : ""}" data-r="${k}">${esc(v.label)}</button>`).join("");
+    rr.addEventListener("click", e => { const b = e.target.closest(".pill"); if (!b) return;
+      tk.resort = b.dataset.r; [...rr.children].forEach(c => c.classList.toggle("active", c.dataset.r === tk.resort)); renderTickets(); });
+    const rg = $("#ticketRange");
+    rg.innerHTML = [7, 30, 60, 90].map(n =>
+      `<button class="pill ${n === tk.range ? "active" : ""}" data-n="${n}">${n}d</button>`).join("");
+    rg.addEventListener("click", e => { const b = e.target.closest(".pill"); if (!b) return;
+      tk.range = +b.dataset.n; [...rg.children].forEach(c => c.classList.toggle("active", +c.dataset.n === tk.range)); renderTicketChart(); });
+    renderTickets();
+  }
+
+  /* ---------- Overview resort toggle ---------- */
+  function initOverviewResort() {
+    const wrap = $("#overviewResort");
+    if (!wrap) return;
+    const opts = [{ id: "all", name: "All Parks" }, ...CFG.resorts];
+    const draw = () => wrap.innerHTML = opts.map(o =>
+      `<button class="pill ${o.id === state.resortFilter ? "active" : ""}" data-r="${o.id}">${esc(o.name)}</button>`).join("");
+    draw();
+    wrap.addEventListener("click", (e) => {
+      const b = e.target.closest(".pill"); if (!b) return;
+      state.resortFilter = b.dataset.r; draw();
+      renderOverviewStats(); renderParkPulse();
+    });
+  }
+
+  /* ---------- Version chip + patch notes ---------- */
+  function initVersion() {
+    const chip = $("#versionChip");
+    if (chip) chip.textContent = "v" + CFG.version;
+    const modal = $("#notesModal");
+    $("#notesBody").innerHTML = CFG.patchNotes.map(p =>
+      `<div class="note-block"><div class="note-head"><b>v${esc(p.v)}</b><span class="muted">${esc(p.date)}</span></div>
+       <ul>${p.notes.map(n => `<li>${esc(n)}</li>`).join("")}</ul></div>`).join("");
+    const open = () => modal.classList.add("open");
+    const close = () => modal.classList.remove("open");
+    chip?.addEventListener("click", open);
+    $("#notesClose")?.addEventListener("click", close);
+    modal?.addEventListener("click", (e) => { if (e.target === modal) close(); });
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape") close(); });
+  }
+
   /* ---------- Wire up ---------- */
   ["waitSearch", "openOnly", "waitSort"].forEach(id =>
     $("#" + id)?.addEventListener("input", renderWaits));
   $("#refreshBtn").addEventListener("click", refreshAll);
 
   initMap();
-  refreshAll();
+  initOverviewResort();
+  initVersion();
+  initTickets();
+  (async () => { await resolveParkIds(); refreshAll(); })();
   setInterval(refreshAll, CFG.refreshMs);
 })();

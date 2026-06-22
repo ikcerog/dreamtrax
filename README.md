@@ -12,6 +12,9 @@ A live, interactive **Walt Disney World** dashboard — ride wait times, an inte
 - **Overview** tab with at-a-glance stats: parks open, average wait, shortest & longest standby right now.
 - **💓 Park Pulse** *(original)* — DreamTrax snapshots wait times locally on every refresh, so it can show whether each ride's line is **▲ rising / ▼ falling** and gauge each park's live **crowd momentum** — no paid or historical API needed.
 - **🌤️ Weather & Golden Hour** *(original)* — current resort conditions plus **sunrise/sunset golden-hour windows** for park photographers, via the free, key-less [Open-Meteo](https://open-meteo.com) API.
+- **🎟️ Ticket price trends** — interactive [Chart.js](https://www.chartjs.org) line graph of 1-Day base ticket prices with **7/30/60/90-day** ranges and a **14-day pricing calendar** (Value/Regular/Peak tiers). No free Disney price API exists, so DreamTrax models Disney's published date-based pricing as an *illustrative* series and **self-records each day's value to `localStorage`** so the history becomes real over time (override via `window.DREAMTRAX_TICKETS`).
+- **🔎 Self-verifying sources** — park IDs are resolved at runtime from queue-times' own `parks.json` by name, so the dashboard can't break on ID drift (this is what fixed Disneyland/DCA showing closed).
+- **Version chip** with in-app **patch notes**, and an **All / WDW / Disneyland** resort toggle on the Overview.
 - **Sorcerer Radio** stream and the **Resort TV info channel** (replica courtesy of WDW Today).
 - **Light/dark theme**, auto-refresh every 5 minutes, Orlando local clock.
 
@@ -28,7 +31,8 @@ Rather than depending on one RSS-to-JSON service (which rate-limits), DreamTrax 
 | Weather        | [Open-Meteo](https://open-meteo.com) (free, no key) |
 | Radio          | Sorcerer Radio public webcast |
 | Resort TV      | YouTube embed (credit: WDW Today) |
-| Fonts          | Inter (Google Fonts) |
+| Charts         | [Chart.js](https://www.chartjs.org) |
+| Fonts          | Raleway (sans) + Merriweather (serif), Google Fonts |
 
 No backend, no API keys, no build tooling — just static files.
 
